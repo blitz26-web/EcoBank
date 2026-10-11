@@ -1,0 +1,123 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Seeders;
+
+use App\Enums\DepositStatus;
+use App\Models\Deposit;
+use App\Models\User;
+use App\Models\WasteCategory;
+use App\Services\DepositService;
+use App\Services\WithdrawalService;
+use Illuminate\Database\Seeder;
+
+/**
+ * Data transaksi demo EcoBank (Langkah 4).
+ *
+ * PENTING: seeder ini TIDAK PERNAH menulis saldo/ledger secara manual.
+ * Semua transaksi dibuat melalui DepositService & WithdrawalService agar
+ * invarian "saldo = rekap point_ledgers" tetap terjaga persis seperti
+ * alur produksi (transaksi + row lock + entri ledger otomatis).
+ *
+ * Hasil akhir untuk demo UI:
+ *  - 2 setoran selesai (loket), 3 setoran pending  -> antrian verifikasi terisi.
+ *  - 1 penarikan diproses, 1 ditolak (refund), 1 diajukan -> antrian penarikan terisi.
+ *
+ * Idempotent: dilewati bila sudah ada data setoran.
+ */
+class DemoTransactionSeeder extends Seeder
+{
+    public function run(): void
+    {
+        if (Deposit::query()->exists()) {
+            $this->command->line('  - DemoTransactionSeeder dilewati (sudah ada data setoran).');
+
+            return;
+        }
+
+        $warga = User::query()->where('email', 'warga@ecobank.test')->first();
+        $sari = User::query()->where('email', 'sari@ecobank.test')->first();
+        $petugas = User::query()->where('email', 'petugas@ecobank.test')->first();
+
+        if ($warga === null || $petugas === null) {
+            $this->command->warn('  - DemoTransactionSeeder dilewati: akun demo tidak ditemukan (jalankan DemoUserSeeder).');
+
+            return;
+        }
+
+        $categories = WasteCategory::query()->get()->keyBy('name');
+
+        if ($categories->isEmpty()) {
+            $this->command->warn('  - DemoTransactionSeeder dilewati: kategori sampah kosong (jalankan WasteCategorySeeder).');
+
+            return;
+        }
+
+        /** @var DepositService $deposits */
+        $deposits = app(DepositService::class);
+        /** @var WithdrawalService $withdrawals */
+        $withdrawals = app(WithdrawalService::class);
+
+        /*
+         * 1) Setoran loket (langsung selesai, poin masuk) untuk warga utama:
+         *    Botol PET 3,5 kg x 10 = 35 poin; Kardus / Duplex 2 kg x 4 = 8 poin. Total 43.
+         */
+        $deposits->createDeposit($warga, [
+            ['waste_category_id' => $categories['Botol PET']->getKey(), 'weight_in_kg' => 3.5],
+            ['waste_category_id' => $categories['Kardus / Duplex']->getKey(), 'weight_in_kg' => 2.0],
+        ], $petugas, DepositStatus::Completed);
+
+        /*
+         * 2) Setoran pending warga utama (menunggu verifikasi):
+         *    Kaleng 1,2 kg x 25 = 30; Plastik Kresek 0,5 kg x 3 = 1.5 -> 2. Total 32.
+         */
+        $deposits->createDeposit($warga, [
+            ['waste_category_id' => $categories['Kaleng Aluminium']->getKey(), 'weight_in_kg' => 1.2],
+            ['waste_category_id' => $categories['Plastik Kresek']->getKey(), 'weight_in_kg' => 0.5],
+        ], null, DepositStatus::Pending);
+
+        /*
+         * 3) Setoran pending + loket untuk akun Sari (bila ada), agar antrian
+         *    dan riwayatnya tidak kosong saat demo.
+         */
+        if ($sari !== null) {
+            $deposits->createDeposit($sari, [
+                ['waste_category_id' => $categories['Kertas HVS']->getKey(), 'weight_in_kg' => 2.0],
+            ], null, DepositStatus::Pending);
+
+            $deposits->createDeposit($sari, [
+                ['waste_category_id' => $categories['Kaleng Aluminium']->getKey(), 'weight_in_kg' => 2.0],
+            ], $petugas, DepositStatus::Completed);
+        }
+
+        /*
+         * 4) Penarikan dengan tiga akhir cerita: diproses, ditolak (refund),
+         *    dan masih diajukan (mengisi antrian petugas).
+         *    Saldo warga mencukupi: 1500 (seeder) + 43 (setoran loket).
+         */
+        $processed = $withdrawals->requestWithdrawal(
+            $warga,
+            300,
+            \App\Models\Withdrawal::PAYMENT_CASH,
+        );
+        $withdrawals->processWithdrawal($processed, $petugas);
+
+        $rejected = $withdrawals->requestWithdrawal(
+            $warga,
+            200,
+            \App\Models\Withdrawal::PAYMENT_E_WALLET,
+            '081234567890',
+        );
+        $withdrawals->rejectWithdrawal($rejected, $petugas, 'Nomor e-wallet tidak terdaftar atas nama warga.');
+
+        $withdrawals->requestWithdrawal(
+            $warga,
+            250,
+            \App\Models\Withdrawal::PAYMENT_BANK_TRANSFER,
+            '1234567890',
+        );
+
+        $this->command->info('  - Transaksi demo dibuat: 4 setoran (2 selesai, 2 pending), 3 penarikan (1 diproses, 1 ditolak, 1 diajukan).');
+    }
+}
