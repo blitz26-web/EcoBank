@@ -13,7 +13,7 @@ use App\Services\WithdrawalService;
 use Illuminate\Database\Seeder;
 
 /**
- * Data transaksi demo EcoBank (Langkah 4).
+ * Data transaksi demo Kas Hijau (Langkah 4).
  *
  * PENTING: seeder ini TIDAK PERNAH menulis saldo/ledger secara manual.
  * Semua transaksi dibuat melalui DepositService & WithdrawalService agar
@@ -36,9 +36,9 @@ class DemoTransactionSeeder extends Seeder
             return;
         }
 
-        $warga = User::query()->where('email', 'warga@ecobank.test')->first();
-        $sari = User::query()->where('email', 'sari@ecobank.test')->first();
-        $petugas = User::query()->where('email', 'petugas@ecobank.test')->first();
+        $warga = User::query()->where('email', 'warga@kashijau.test')->first();
+        $sari = User::query()->where('email', 'sari@kashijau.test')->first();
+        $petugas = User::query()->where('email', 'petugas@kashijau.test')->first();
 
         if ($warga === null || $petugas === null) {
             $this->command->warn('  - DemoTransactionSeeder dilewati: akun demo tidak ditemukan (jalankan DemoUserSeeder).');

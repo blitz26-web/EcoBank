@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * Riwayat mutasi poin (audit trail) milik user yang sedang login.
  *
  * Ledger bersifat imutabel: halaman ini HANYA membaca. Saldo terkini
- * selalu konsisten dengan rekap entri ledger (invarian EcoBank), dan
+ * selalu konsisten dengan rekap entri ledger (invarian Kas Hijau), dan
  * filter arah mutasi (masuk/keluar) memudahkan warga menelusuri
  * sumber poin maupun pengeluarannya.
  */

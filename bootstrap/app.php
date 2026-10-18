@@ -9,7 +9,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 /*
 |--------------------------------------------------------------------------
-| Bootstrap Aplikasi EcoBank (Laravel 11/12/13 style)
+| Bootstrap Aplikasi Kas Hijau (Laravel 11/12/13 style)
 |--------------------------------------------------------------------------
 | File ini menggantikan Kernel.php pada skeleton Laravel modern.
 |
@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Alias middleware khusus EcoBank: proteksi route per peran.
+        // Alias middleware khusus Kas Hijau: proteksi route per peran.
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);

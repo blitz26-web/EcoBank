@@ -14,7 +14,7 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Service yang menangani seluruh alur bisnis penarikan poin EcoBank.
+ * Service yang menangani seluruh alur bisnis penarikan poin Kas Hijau.
  *
  * Pola HOLD: poin dipotong dari saldo saat pengajuan dibuat (requested)
  * agar saldo tidak bisa dipakai ganda oleh beberapa pengajuan yang
@@ -197,8 +197,8 @@ class WithdrawalService
             throw new InvalidArgumentException('Jumlah poin penarikan harus lebih besar dari nol.');
         }
 
-        $min = (int) config('ecobank.min_withdrawal_points', 0);
-        $max = (int) config('ecobank.max_withdrawal_points', 0);
+        $min = (int) config('kas-hijau.min_withdrawal_points', 0);
+        $max = (int) config('kas-hijau.max_withdrawal_points', 0);
 
         if ($min > 0 && $pointsAmount < $min) {
             throw new InvalidArgumentException(sprintf(
@@ -221,10 +221,10 @@ class WithdrawalService
      */
     private function convertPointsToRupiah(int $pointsAmount): float
     {
-        $pointValue = (int) config('ecobank.point_value', 0);
+        $pointValue = (int) config('kas-hijau.point_value', 0);
 
         if ($pointValue <= 0) {
-            throw new RuntimeException('Konfigurasi ecobank.point_value belum diatur dengan benar (harus lebih besar dari 0).');
+            throw new RuntimeException('Konfigurasi kas-hijau.point_value belum diatur dengan benar (harus lebih besar dari 0).');
         }
 
         return round($pointsAmount * $pointValue, 2);

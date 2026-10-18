@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Buku besar (ledger) mutasi poin — audit trail keuangan EcoBank.
+ * Buku besar (ledger) mutasi poin — audit trail keuangan Kas Hijau.
  *
  * Aturan imutabilitas: entri TIDAK pernah diubah/dihapus. Koreksi saldo
  * dilakukan dengan entri baru yang berlawanan arah (kompensasi).

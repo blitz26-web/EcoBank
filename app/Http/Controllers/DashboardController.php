@@ -95,7 +95,7 @@ class DashboardController extends Controller
             'totalPoints' => (int) $depositStats->total_points,
             'hasActiveWithdrawal' => $activeWithdrawal,
             'recentLedgers' => $recentLedgers,
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
         ]);
     }
 
@@ -153,7 +153,7 @@ class DashboardController extends Controller
             'circulatingPoints' => $circulatingPoints,
             'depositsToday' => $depositsToday,
             'withdrawalsToday' => $withdrawalsToday,
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
         ]);
     }
 
@@ -233,7 +233,7 @@ class DashboardController extends Controller
             'circulatingPoints' => $circulatingPoints,
             'depositsToday' => $depositsToday,
             'withdrawalsToday' => $withdrawalsToday,
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
             'reconciliationOk' => $ledgerMismatches->isEmpty(),
             'ledgerMismatches' => $ledgerMismatches,
             'recentDeposits' => $recentDeposits,

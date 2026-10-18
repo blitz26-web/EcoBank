@@ -57,7 +57,7 @@ class WithdrawalController extends Controller
             'statuses' => WithdrawalStatus::cases(),
             'isWarga' => $user->isWarga(),
             'canDecide' => $user->isPetugas() || $user->isAdmin(),
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
         ]);
     }
 
@@ -72,9 +72,9 @@ class WithdrawalController extends Controller
 
         return view('withdrawals.create', [
             'balance' => (int) $user->balance_points,
-            'minPoints' => max(1, (int) config('ecobank.min_withdrawal_points', 1)),
-            'maxPoints' => (int) config('ecobank.max_withdrawal_points', 0),
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'minPoints' => max(1, (int) config('kas-hijau.min_withdrawal_points', 1)),
+            'maxPoints' => (int) config('kas-hijau.max_withdrawal_points', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
             'paymentLabels' => Withdrawal::paymentLabels(),
             'hasActiveWithdrawal' => $user->withdrawals()
                 ->where('status', WithdrawalStatus::Requested->value)

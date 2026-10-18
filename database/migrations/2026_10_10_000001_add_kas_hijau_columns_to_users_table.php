@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Menambahkan kolom khusus EcoBank ke tabel users bawaan Laravel:
+ * Menambahkan kolom khusus Kas Hijau ke tabel users bawaan Laravel:
  *  - phone          : nomor HP untuk kontak & notifikasi.
  *  - role           : peran sederhana (warga | petugas | admin). Nilai
  *                     dipetakan ke App\Enums\UserRole di level aplikasi;

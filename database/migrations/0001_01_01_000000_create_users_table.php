@@ -1,19 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tabel users (pengganti migration default Laravel).
+ * Migrasi bawaan Laravel (disertakan agar paket siap pakai):
+ * membuat tabel users, password_reset_tokens, dan sessions.
  *
- * Kolom tambahan EcoBank:
- * - phone          : nomor HP untuk kontak dan notifikasi.
- * - role           : peran pengguna (warga | petugas | admin).
- * - balance_points : saldo poin saat ini (pembacaan cepat); riwayat lengkap
- *                    mutasinya tercatat immutable di tabel point_ledgers.
+ * Catatan Kas Hijau: kolom phone, role, dan balance_points DITAMBAHKAN
+ * TERPISAH oleh migrasi 2026_10_10_000001_add_kas_hijau_columns_to_users_table.
  */
 return new class extends Migration
 {
@@ -22,26 +18,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table): void {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('phone', 20)->nullable()->index();
-            $table->string('role', 20)->default('warga')->index();
-            $table->unsignedBigInteger('balance_points')->default(0);
             $table->rememberToken();
             $table->timestamps();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table): void {
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        Schema::create('sessions', function (Blueprint $table): void {
+        Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
@@ -56,8 +49,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sessions');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('users');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('sessions');
     }
 };

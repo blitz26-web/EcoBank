@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\MultiAccountController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -58,4 +59,21 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/keluar', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    /* ------------------- Multi-akun (satu sesi, banyak akun) -------------------
+     * Menambah akun WAJIB memasukkan kredensial akun tujuan (rate limit
+     * sama dengan login). Berpindah antar akun yang sudah terdaftar pada
+     * sesi ini tidak meminta ulang kata sandi — pola Google/Gmail.
+     */
+    Route::get('/akun/tambah', [MultiAccountController::class, 'create'])
+        ->name('accounts.create');
+
+    Route::post('/akun/tambah', [MultiAccountController::class, 'store'])
+        ->name('accounts.store');
+
+    Route::post('/akun/pindah', [MultiAccountController::class, 'switchAccount'])
+        ->name('accounts.switch');
+
+    Route::post('/akun/keluar-semua', [MultiAccountController::class, 'logoutAll'])
+        ->name('accounts.logoutAll');
 });

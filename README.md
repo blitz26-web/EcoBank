@@ -9,7 +9,7 @@ verifikasi di loket, dan admin memantau seluruh sistem termasuk rekonsiliasi led
 |---|---|
 | Framework | Laravel 13 (PHP 8.3+, `declare(strict_types=1)` di semua file PHP) |
 | Antarmuka | Blade Templates + Bootstrap 5.3 + Bootstrap Icons (CDN) |
-| Database | MySQL (7 migrasi, 6 tabel inti) |
+| Database | MySQL (10 migrasi: 3 bawaan Laravel + 7 aplikasi, 6 tabel inti) |
 | Gaya kode | PSR-12, type-safe (enum PHP 8.3), service layer + transaksi atomik |
 | Bahasa UI | Indonesia penuh (termasuk pesan validasi, email, dan halaman error) |
 | Status | Siap dipakai untuk demo/development; verifikasi email dinonaktifkan sesuai permintaan |
@@ -71,7 +71,7 @@ kapan pun.
 ### Pengalaman Pengguna
 
 - **Dark mode** — toggle bulan/matahari di bar navbar; pakai `data-bs-theme` native Bootstrap
-  5.3, tersimpan di `localStorage` (kunci `ecobank-theme`), mengikuti preferensi sistem saat
+  5.3, tersimpan di `localStorage` (kunci `kashijau-theme`), mengikuti preferensi sistem saat
   belum dipilih, tanpa kedip saat pindah halaman.
 - **Multi-akun login** (pola Google/Gmail) — tambahkan beberapa akun dalam satu browser lalu
   berpindah antar akun sekali klik dari dropdown akun di navbar, tanpa login ulang.
@@ -108,7 +108,7 @@ Kontrol akses berlapis: **middleware `role:...`** untuk proteksi route (coarse-g
 
 ```
 poin per item = round(berat_kg × point_per_unit)      → WasteCategory::calculatePoints()
-rupiah        = poin × config('ecobank.point_value')  → default Rp 100 / poin
+rupiah        = poin × config('kas-hijau.point_value')  → default Rp 100 / poin
 ```
 
 Contoh: 1 kg Botol PET (tarif 10 poin/kg) = **10 poin = Rp 1.000**; 0,5 kg Kresek
@@ -117,9 +117,9 @@ Nilai tukar dan batas penarikan diatur dari server (`.env`/config) dan **tidak p
 diterima dari klien**, sehingga tidak bisa dimanipulasi:
 
 ```env
-ECOBANK_POINT_VALUE=100          # Rupiah per poin
-ECOBANK_MIN_WITHDRAWAL_POINTS=100  # minimum per pengajuan (0 = tanpa minimum)
-ECOBANK_MAX_WITHDRAWAL_POINTS=0    # maksimum per pengajuan (0 = tanpa maksimum)
+KAS_HIJAU_POINT_VALUE=100          # Rupiah per poin
+KAS_HIJAU_MIN_WITHDRAWAL_POINTS=100  # minimum per pengajuan (0 = tanpa minimum)
+KAS_HIJAU_MAX_WITHDRAWAL_POINTS=0    # maksimum per pengajuan (0 = tanpa maksimum)
 ```
 
 ### Alur Setoran (dua skenario)
@@ -194,7 +194,7 @@ sehingga mengubah tarif kategori **tidak meretroaktif** setoran lama.
 ## Struktur Folder
 
 ```
-ecobank/
+kas-hijau/
 ├── app/
 │   ├── Enums/                      # UserRole, DepositStatus, WithdrawalStatus, LedgerType
 │   │                               #   (helper label()/badgeClass()/icon() untuk UI)
@@ -223,9 +223,11 @@ ecobank/
 │       ├── WithdrawalService.php   # pola hold, proses, tolak + refund
 │       └── MultiAccountSession.php # daftar akun per sesi (multi-login)
 ├── bootstrap/app.php               # alias middleware `role` + redirect guest/user
-├── config/ecobank.php              # point_value & batas penarikan
+├── config/kas-hijau.php              # point_value & batas penarikan
 ├── database/
-│   ├── migrations/                 # 7 migrasi (users kolom tambahan + 5 tabel + evolusi withdrawals)
+│   ├── migrations/                 # 10 migrasi — 3 bawaan Laravel (0001_01_01_*: users,
+│   │                               #   password_reset_tokens, sessions, cache, jobs) + 7
+│   │                               #   aplikasi (kolom users + 5 tabel + evolusi withdrawals)
 │   └── seeders/                    # Database, DemoUser, DummyUser, WasteCategory, DemoTransaction
 ├── lang/id/                        # auth, passwords, pagination, validation (Indonesia)
 ├── resources/views/
@@ -286,7 +288,7 @@ ecobank/
 1. Buat project Laravel bila belum ada:
 
    ```bash
-   composer create-project laravel/laravel ecobank
+   composer create-project laravel/laravel kas-hijau
    ```
 
 2. Salin folder `app/`, `bootstrap/`, `config/`, `database/`, `lang/`, `resources/`, dan
@@ -295,21 +297,26 @@ ecobank/
 
    > `bootstrap/app.php` menimpa milik skeleton. Bila project Anda sudah mengeditnya,
    > cukup salin 3 baris di dalam `withMiddleware()` (lihat komentar di file tersebut).
+   > Folder `database/migrations/` dari paket ini SUDAH memuat 3 migrasi bawaan
+   > Laravel (`0001_01_01_*` pembuat tabel `users`, `password_reset_tokens`,
+   > `sessions`, `cache`, `jobs`) sehingga aman menimpa seluruh folder `database/`
+   > dari skeleton. JANGAN hapus file `0001_01_01_*` — migrasi aplikasi menambah
+   > kolom ke tabel `users` yang dibuat oleh migrasi tersebut.
 
 3. Konfigurasi database, mail, dan locale di `.env`:
 
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
-   DB_DATABASE=ecobank
+   DB_DATABASE=kas_hijau_db
    APP_LOCALE=id
    APP_FALLBACK_LOCALE=en
    MAIL_MAILER=log                  # development; produksi ganti smtp
-   MAIL_FROM_ADDRESS=no-reply@ecobank.test
-   MAIL_FROM_NAME="EcoBank"
-   ECOBANK_POINT_VALUE=100
-   ECOBANK_MIN_WITHDRAWAL_POINTS=100
-   ECOBANK_MAX_WITHDRAWAL_POINTS=0
+   MAIL_FROM_ADDRESS=no-reply@kashijau.test
+   MAIL_FROM_NAME="Kas Hijau"
+   KAS_HIJAU_POINT_VALUE=100
+   KAS_HIJAU_MIN_WITHDRAWAL_POINTS=100
+   KAS_HIJAU_MAX_WITHDRAWAL_POINTS=0
    ```
 
    > Dengan `MAIL_MAILER=log`, email reset kata sandi ditulis ke
@@ -343,12 +350,12 @@ ecobank/
 ### B. Alternatif Cepat: Import SQL via phpMyAdmin (XAMPP)
 
 Bila `php artisan` sulit dijalankan di lingkungan Anda, data dummy lengkap tersedia sebagai
-file **`ecobank-dummy-data.sql`** yang menyertai paket ini:
+file **`kas-hijau-dummy-data.sql`** yang menyertai paket ini:
 
 1. Pastikan tabel sudah dibuat (jalankan `php artisan migrate` sekali, atau buat database
-   `ecobank` lalu migrasi). Import SQL ini TIDAK membuat tabel — hanya mengisi data.
-2. Buka **phpMyAdmin → database `ecobank` → tab Import** → pilih
-   `ecobank-dummy-data.sql` → **Import**. File memakai `TRUNCATE` + `FOREIGN_KEY_CHECKS=0`
+   `kas_hijau_db` lalu migrasi). Import SQL ini TIDAK membuat tabel — hanya mengisi data.
+2. Buka **phpMyAdmin → database `kas_hijau_db` → tab Import** → pilih
+   `kas-hijau-dummy-data.sql` → **Import**. File memakai `TRUNCATE` + `FOREIGN_KEY_CHECKS=0`
    sehingga aman di-import ulang kapan pun (data dikembalikan ke kondisi awal).
 3. Isi file: 16 users (password `password`), 6 kategori sampah, 4 setoran, 6 item setoran,
    3 penarikan (proses/tolak+refund/ajukan), dan 19 entri ledger kronologis — identik dengan
@@ -362,22 +369,22 @@ registrasi manual wajib memenuhi kebijakan kekuatan kata sandi, contoh: `Passw0r
 
 | Email | Peran | Saldo awal | Keterangan |
 |---|---|---|---|
-| admin@ecobank.test | Administrator | 0 | Akses seluruh halaman (bypass middleware & gate) |
-| petugas@ecobank.test | Petugas | 0 | Verifikasi setoran & proses penarikan |
-| warga@ecobank.test | Warga | 1.500 poin | Saldo akhir **993** setelah transaksi demo |
-| sari@ecobank.test | Warga | 0 | Saldo akhir **50** setelah transaksi demo |
-| andi@ecobank.test | Warga | 2.450 poin | Dummy (DummyUserSeeder) |
-| dewi@ecobank.test | Warga | 1.830 poin | Dummy |
-| agus@ecobank.test | Warga | 920 poin | Dummy |
-| rina@ecobank.test | Warga | 3.750 poin | Dummy |
-| joko@ecobank.test | Warga | 640 poin | Dummy |
-| fitri@ecobank.test | Warga | 2.880 poin | Dummy |
-| rudi@ecobank.test | Warga | 1.500 poin | Dummy |
-| nina@ecobank.test | Warga | 110 poin | Dummy |
-| eko@ecobank.test | Warga | 5.000 poin | Dummy |
-| lina@ecobank.test | Warga | 2.210 poin | Dummy |
-| doni@ecobank.test | Warga | 760 poin | Dummy |
-| maya@ecobank.test | Warga | 3.400 poin | Dummy |
+| admin@kashijau.test | Administrator | 0 | Akses seluruh halaman (bypass middleware & gate) |
+| petugas@kashijau.test | Petugas | 0 | Verifikasi setoran & proses penarikan |
+| warga@kashijau.test | Warga | 1.500 poin | Saldo akhir **993** setelah transaksi demo |
+| sari@kashijau.test | Warga | 0 | Saldo akhir **50** setelah transaksi demo |
+| andi@kashijau.test | Warga | 2.450 poin | Dummy (DummyUserSeeder) |
+| dewi@kashijau.test | Warga | 1.830 poin | Dummy |
+| agus@kashijau.test | Warga | 920 poin | Dummy |
+| rina@kashijau.test | Warga | 3.750 poin | Dummy |
+| joko@kashijau.test | Warga | 640 poin | Dummy |
+| fitri@kashijau.test | Warga | 2.880 poin | Dummy |
+| rudi@kashijau.test | Warga | 1.500 poin | Dummy |
+| nina@kashijau.test | Warga | 110 poin | Dummy |
+| eko@kashijau.test | Warga | 5.000 poin | Dummy |
+| lina@kashijau.test | Warga | 2.210 poin | Dummy |
+| doni@kashijau.test | Warga | 760 poin | Dummy |
+| maya@kashijau.test | Warga | 3.400 poin | Dummy |
 
 Verifikasi email saat ini **nonaktif**, jadi semua akun langsung bisa dipakai tanpa membuka
 email. Kolom `email_verified_at` tetap ada dan diisi `now()` oleh seeder sebagai bekal bila
@@ -392,7 +399,7 @@ tetap rekonsiliasi. Saldo akhir warga demo: 1.500 + 43 (setoran loket) − 300 (
 
 ## Fitur Multi-Akun Login
 
-Satu browser bisa memuat beberapa akun EcoBank sekaligus (pola Google/Gmail). Daftar akun
+Satu browser bisa memuat beberapa akun Kas Hijau sekaligus (pola Google/Gmail). Daftar akun
 disimpan di sesi server — **hanya ID user, tanpa kredensial** — sedangkan akun aktif tetap
 ditangani guard `web` bawaan Laravel, sehingga middleware `role`, policy, dan scoping
 otomatis mengikuti akun yang sedang aktif.
@@ -442,7 +449,7 @@ Bila suatu saat ingin diaktifkan kembali (pola Breeze):
 | Kolom `status` bertipe string + cast ke PHP enum | Menghindari SQL ENUM yang sulit dimigrasi; type-safe di level aplikasi dan tetap fleksibel. |
 | `PointLedgerService` satu pintu mutasi saldo | Semua perubahan `balance_points` hanya lewat `credit()`/`debit()`, sehingga aturan "setiap perubahan = entri ledger baru" mustahil terlewat; dipakai bersama DepositService, WithdrawalService, dan seeder. |
 | Pola HOLD pada penarikan | Poin dipotong saat pengajuan (requested) agar saldo tidak bisa dipakai ganda oleh beberapa pengajuan bersamaan; penolakan otomatis mengembalikan poin lewat entri kredit. |
-| Nilai tukar poin dari config server | `cash_amount` dihitung dengan `config('ecobank.point_value')`; rate tidak pernah diterima dari klien sehingga tidak bisa dimanipulasi. |
+| Nilai tukar poin dari config server | `cash_amount` dihitung dengan `config('kas-hijau.point_value')`; rate tidak pernah diterima dari klien sehingga tidak bisa dimanipulasi. |
 | `lockForUpdate()` pada baris user/deposit/withdrawal | Mencegah race condition: dua transaksi tidak bisa membaca saldo yang sama dan memutasi bersamaan. |
 | FK `restrictOnDelete` untuk data keuangan | Riwayat setoran/penarikan/ledger tidak boleh hilang mengikuti penghapusan user; gunakan soft delete / flag aktif. |
 | `PointLedger` memblokir `updating` dan `deleting` | Imutabilitas audit trail di level aplikasi; koreksi selalu berupa entri baru yang berlawanan arah. |
@@ -514,7 +521,7 @@ $wdr = $withdrawals->requestWithdrawal(
     paymentMethod: Withdrawal::PAYMENT_BANK_TRANSFER,
     accountNumber: '1234567890',                         // wajib untuk non-tunai
 );
-// cash_amount = 500 × config('ecobank.point_value') = Rp 50.000
+// cash_amount = 500 × config('kas-hijau.point_value') = Rp 50.000
 
 // 2a. Petugas menolak: poin kembali otomatis + entri kredit di ledger
 $withdrawals->rejectWithdrawal($wdr, $petugas, 'Rekening tidak atas nama pemilik.');
@@ -549,23 +556,23 @@ transaksi database bersama debit ledger. Service tetap memvalidasi ulang semuany
 
 ## Skenario Uji Manual
 
-1. **Warga** (`warga@ecobank.test`) → Dashboard → aksi cepat → **Ajukan Setoran Mandiri** →
+1. **Warga** (`warga@kashijau.test`) → Dashboard → aksi cepat → **Ajukan Setoran Mandiri** →
    tambah 2 jenis sampah (baris dinamis + preview poin) → kirim → status *Menunggu
    Verifikasi* di Riwayat Setoran (dapat dibatalkan selama pending).
 2. **Warga** → **Tarik Poin** → pilih jumlah (chip cepat / manual, preview Rupiah) → pilih
    metode (nomor rekening muncul otomatis untuk non-tunai) → kirim → poin terpotong (hold)
    dan muncul di Riwayat Penarikan status *Diajukan*.
-3. **Petugas** (`petugas@ecobank.test`) → Antrian → kartu *Setoran Menunggu Verifikasi* →
+3. **Petugas** (`petugas@kashijau.test`) → Antrian → kartu *Setoran Menunggu Verifikasi* →
    **Verifikasi** → poin masuk ke saldo warga, entri ledger kredit tercipta.
 4. **Petugas** → kartu *Penarikan Menunggu Diproses* → **Proses** (selesai dibayar) atau
    **Tolak** lewat modal (alasan wajib) → bila ditolak, poin otomatis kembali ke warga.
 5. **Petugas** → **Catat Setoran di Loket** → pilih warga + multi-kategori → simpan →
    setoran langsung *Selesai*, poin masuk seketika.
-6. **Admin** (`admin@ecobank.test`) → menu **Kategori** → tambah/ubah via modal; hapus hanya
+6. **Admin** (`admin@kashijau.test`) → menu **Kategori** → tambah/ubah via modal; hapus hanya
    untuk kategori yang belum dipakai → buka **Admin** (`/admin`) → cek kartu Rekonsiliasi
    Ledger (badge *Konsisten*) dan Top Saldo.
 7. **Multi-akun** → dari akun mana pun, klik dropdown akun di navbar → **Tambah akun lain**
-   (`petugas@ecobank.test` / `password`) → kini aktif sebagai petugas → dropdown → klik
+   (`petugas@kashijau.test` / `password`) → kini aktif sebagai petugas → dropdown → klik
    warga di *Berpindah ke akun* → kembali jadi warga tanpa login ulang → coba **Keluar dari
    akun ini** → otomatis pindah ke akun tersisa.
 8. **Dark mode** → klik ikon bulan di navbar → seluruh halaman (termasuk modal, dropdown,
@@ -588,7 +595,7 @@ seeder dijalankan agar dua mekanisme ini tidak saling bertentangan.
 | Langkah 3 | Auth gaya Breeze (Blade + Bootstrap 5), middleware `role:...`, dashboard per peran, profil, halaman error kustom, `lang/id`, seeder akun + kategori. |
 | Langkah 4 | UI fungsional penuh: setoran dinamis, antrian petugas, riwayat berfilter + pagination, CRUD kategori, seeder transaksi demo via Service. |
 | Revisi | Verifikasi email dinonaktifkan (hapus bersih) + 12 akun warga dummy berledger. |
-| Revisi data | `ecobank-dummy-data.sql` — dump MySQL idempotent identik dengan seeder untuk import phpMyAdmin. |
+| Revisi data | `kas-hijau-dummy-data.sql` — dump MySQL idempotent identik dengan seeder untuk import phpMyAdmin. |
 | Revisi UI | Dark mode `data-bs-theme` + Panel Admin `/admin` (rekonsiliasi, transaksi terbaru, top saldo, antrian). |
 | Revisi terakhir | Navbar: toggle tema + dropdown akun pindah ke bar atas (di luar menu collapse); dropdown akun mendukung multi-login (tambah/pindah/keluar semua). |
 
@@ -607,11 +614,13 @@ seeder dijalankan agar dua mekanisme ini tidak saling bertentangan.
 
 | Gejala | Penyebab & solusi |
 |---|---|
-| Semua tabel kosong di phpMyAdmin | Seeder belum pernah dijalankan di lingkungan Anda. Jalankan `php artisan migrate` lalu `php artisan db:seed`, atau import `ecobank-dummy-data.sql` lewat tab Import phpMyAdmin (tabel harus sudah dibuat oleh migrasi). |
+| Semua tabel kosong di phpMyAdmin | Seeder belum pernah dijalankan di lingkungan Anda. Jalankan `php artisan migrate` lalu `php artisan db:seed`, atau import `kas-hijau-dummy-data.sql` lewat tab Import phpMyAdmin (tabel harus sudah dibuat oleh migrasi). |
+| `SQLSTATE[42S02]` — 1146 Table 'users' doesn't exist saat `php artisan migrate` | Tabel `users` dibuat oleh migrasi BAWAAN Laravel (`0001_01_01_000000_create_users_table.php`), bukan oleh migrasi aplikasi. File bawaan itu hilang dari `database/migrations/` (biasanya karena folder `database/` skeleton tertimpa seluruhnya). Salin kembali 3 file `0001_01_01_*` dari skeleton Laravel baru (`composer create-project laravel/laravel tmp` lalu salin `tmp/database/migrations/0001_01_01_*.php`), atau pakai paket ini yang sudah menyertakannya — lalu `php artisan migrate:fresh --seed`. |
+| `SQLSTATE[42S21]` — 1060 Duplicate column name 'phone' saat `php artisan migrate` | Database Anda sudah memuat tabel `users` lama (kolom `phone` dsb. sudah ada), tetapi tabel `migrations` kosong/tidak sinkron sehingga Laravel mencoba menambah kolom yang sama lagi. Solusi terbersih untuk development/demo: `php artisan migrate:fresh --seed` — menghapus SEMUA tabel lalu migrasi + seeder dari nol (data demo terisi otomatis). Alternatif: hapus semua tabel di phpMyAdmin terlebih dulu, baru jalankan `php artisan migrate`. Jika tabel & data Anda sudah lengkap dan benar, migrasi tidak perlu dijalankan ulang sama sekali — cukup lanjut memakai aplikasi. |
 | Login gagal padahal email benar | Pastikan memakai password demo `password` untuk akun seeded. Akun hasil registrasi manual memakai password Anda sendiri. Terkena rate limit? Tunggu 1 menit (5 percobaan/menit). |
 | Email reset tidak terkirim | `MAIL_MAILER=log` menulis email ke `storage/logs/laravel.log`, bukan mengirim sungguhan. Ini perilaku normal untuk development. |
 | Warga membuka `/admin` mendapat 403 | Memang disengaja — halaman error 403 kustom menampilkan daftar peran yang diizinkan. Login sebagai admin atau petugas sesuai halaman tujuan. |
 | Saldo tampak tidak cocok dengan mutasi | Cek Panel Admin (`/admin`) → kartu Rekonsiliasi Ledger. Bila pakai import SQL, pastikan import file terbaru (sudah memuat 19 entri ledger kronologis) dan jangan edit `balance_points` manual — selalu lewat service/ledger. |
 | Tombol hapus kategori nonaktif | Kategori pernah dipakai di setoran; FK `restrictOnDelete` melarang agar riwayat poin historis tetap konsisten. |
-| Tema kembali terang di browser lain | Preferensi tema disimpan per-browser di `localStorage` (kunci `ecobank-theme`), bukan di database. |
+| Tema kembali terang di browser lain | Preferensi tema disimpan per-browser di `localStorage` (kunci `kashijau-theme`), bukan di database. |
 | Daftar akun multi-login hilang | Daftar hidup di sesi server — hilang setelah logout semua, session expired, atau `php artisan session:table`/ganti driver sesi. Tambah ulang akun via "Tambah akun lain". |

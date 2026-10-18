@@ -14,7 +14,7 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Service yang menangani seluruh alur bisnis penyetoran sampah EcoBank.
+ * Service yang menangani seluruh alur bisnis penyetoran sampah Kas Hijau.
  *
  * Prinsip utama:
  *  1. ATOMIK     — semua operasi dibungkus DB::transaction(); saldo warga,

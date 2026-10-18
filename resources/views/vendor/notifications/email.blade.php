@@ -1,6 +1,6 @@
 @component('mail::message')
 {{-- ============================================================= --}}
-{{-- Template email notifikasi EcoBank (versi bahasa Indonesia) --}}
+{{-- Template email notifikasi Kas Hijau (versi bahasa Indonesia) --}}
 {{-- Menimpa template bawaan framework secara otomatis karena --}}
 {{-- berada di resources/views/vendor/notifications/email.blade.php --}}
 {{-- ============================================================= --}}

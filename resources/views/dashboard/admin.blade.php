@@ -1,7 +1,3 @@
-
-
-
-
 @extends('layouts.app')
 
 @section('title', 'Ringkasan Admin')
@@ -101,7 +97,7 @@
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
                         <div>
                             <div class="fw-semibold">1 poin = Rp {{ number_format($pointValue, 0, ',', '.') }}</div>
-                            <div class="text-muted small">Atur lewat <code>ECOBANK_POINT_VALUE</code> di file .env</div>
+                            <div class="text-muted small">Atur lewat <code>KAS_HIJAU_POINT_VALUE</code> di file .env</div>
                         </div>
                         <i class="bi bi-percent fs-3 text-muted"></i>
                     </div>

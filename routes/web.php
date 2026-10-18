@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Routes Web EcoBank
+| Routes Web Kas Hijau
 |--------------------------------------------------------------------------
 | Kelompok route publik, terautentikasi, transaksi, dan terproteksi peran.
 | Routes auth (login/register/reset password) dijalankan dari routes/auth.php.

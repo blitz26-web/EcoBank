@@ -36,8 +36,8 @@ class StoreWithdrawalRequest extends FormRequest
     {
         $methods = implode(',', app(WithdrawalService::class)->allowedPaymentMethods());
 
-        $min = max(1, (int) config('ecobank.min_withdrawal_points', 1));
-        $max = (int) config('ecobank.max_withdrawal_points', 0);
+        $min = max(1, (int) config('kas-hijau.min_withdrawal_points', 1));
+        $max = (int) config('kas-hijau.max_withdrawal_points', 0);
 
         $pointsRules = ['required', 'integer', 'min:' . $min];
 

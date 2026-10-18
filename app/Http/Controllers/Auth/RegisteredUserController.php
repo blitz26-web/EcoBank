@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Enums\UserRole;
+use App\Services\MultiAccountSession;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
 /**
- * Registrasi akun baru EcoBank.
+ * Registrasi akun baru Kas Hijau.
  *
  * Keputusan keamanan: pendaftaran publik SELALU berperan `warga`.
  * Akun `petugas` dan `admin` hanya dapat dibuat oleh admin lewat
@@ -65,6 +66,9 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        // Akun baru ikut tercatat pada daftar multi-akun sesi.
+        MultiAccountSession::remember($request, (int) $user->id);
 
         return redirect()->route('dashboard');
     }

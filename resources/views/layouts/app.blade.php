@@ -66,6 +66,10 @@
         /* Ikon tombol tema: bulan saat terang, matahari saat gelap. */
         [data-bs-theme="light"] .theme-icon-sun { display: none; }
         [data-bs-theme="dark"] .theme-icon-moon { display: none; }
+        /* Label kecil tambahan (sub-teks item dropdown akun). */
+        .extra-small {
+            font-size: .72rem;
+        }
         .theme-toggle-navbar {
             width: 2.5rem;
             height: 2.5rem;
@@ -94,16 +98,110 @@
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{{ route('dashboard') }}">
                 <span class="brand-icon"><i class="bi bi-recycle"></i></span>
-                <span class="text-success">Eco</span>Bank
+                <span class="text-success">Kas Hijau</span>
             </a>
 
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#mainNavbar" aria-controls="mainNavbar"
-                    aria-expanded="false" aria-label="Buka menu navigasi">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            {{-- Klaster kanan: pengalih tema, menu akun, dan tombol menu.
+                 DIKELUARKAN dari menu collapse agar SELALU terlihat di bar
+                 navbar — tidak perlu membuka menu (baris tiga) lebih dulu,
+                 baik di ponsel maupun desktop. --}}
+            <div class="d-flex align-items-center gap-2 ms-auto order-lg-3">
+                @include('partials.theme-toggle')
 
-            <div class="collapse navbar-collapse" id="mainNavbar">
+                @php
+                    $multiAccounts = auth()->check()
+                        ? \App\Services\MultiAccountSession::users(request())
+                        : collect();
+                    $otherAccounts = $multiAccounts
+                        ->reject(fn ($account): bool => (int) $account->id === (int) auth()->id())
+                        ->values();
+                @endphp
+
+                {{-- Menu pengguna + dukungan multi-akun (pola Google/Gmail) --}}
+                <div class="dropdown">
+                    <button class="btn border d-flex align-items-center gap-2 dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-5 text-success"></i>
+                        <span class="d-none d-sm-inline text-truncate" style="max-width: 8rem;">{{ auth()->user()->name }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 17rem;">
+                        <li class="px-3 py-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-person-check-fill text-success fs-4"></i>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-semibold text-truncate">{{ auth()->user()->name }}</div>
+                                    <div class="text-body-secondary small text-truncate">{{ auth()->user()->email }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-1 d-flex gap-1">
+                                <span class="badge bg-{{ auth()->user()->role->badgeClass() }}">
+                                    {{ auth()->user()->role->label() }}
+                                </span>
+                                <span class="badge text-bg-light border">Aktif</span>
+                            </div>
+                        </li>
+
+                        @if ($otherAccounts->isNotEmpty())
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Berpindah ke akun</h6></li>
+                            @foreach ($otherAccounts as $account)
+                                <li>
+                                    <form method="POST" action="{{ route('accounts.switch') }}">
+                                        @csrf
+                                        <input type="hidden" name="user_id" value="{{ $account->id }}">
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2">
+                                            <i class="bi bi-person-circle text-body-secondary"></i>
+                                            <span class="flex-grow-1 overflow-hidden">
+                                                <span class="d-block text-truncate">{{ $account->name }}</span>
+                                                <span class="d-block text-body-secondary extra-small">{{ $account->role->label() }}</span>
+                                            </span>
+                                        </button>
+                                    </form>
+                                </li>
+                            @endforeach
+                        @endif
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ route('accounts.create') }}">
+                                <i class="bi bi-person-plus me-2"></i>Tambah akun lain
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                <i class="bi bi-person-gear me-2"></i>Profil Saya
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Keluar dari akun ini
+                                </button>
+                            </form>
+                        </li>
+                        @if ($multiAccounts->count() > 1)
+                            <li>
+                                <form method="POST" action="{{ route('accounts.logoutAll') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-door-open me-2"></i>Keluar dari semua akun
+                                    </button>
+                                </form>
+                            </li>
+                        @endif
+                    </ul>
+                </div>
+
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+                        aria-expanded="false" aria-label="Buka menu navigasi">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse order-lg-2 me-lg-auto" id="mainNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
@@ -134,43 +232,6 @@
                         </li>
                     @endif
                 </ul>
-
-                {{-- Pengalih tema terang/gelap --}}
-                <div class="d-flex align-items-center ms-lg-2 me-lg-2 mt-2 mt-lg-0">
-                    @include('partials.theme-toggle')
-                </div>
-
-                {{-- Menu pengguna --}}
-                <div class="dropdown ms-lg-3">
-                    <button class="btn border d-flex align-items-center gap-2 dropdown-toggle"
-                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle fs-5 text-success"></i>
-                        <span class="d-none d-sm-inline">{{ auth()->user()->name }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li class="px-3 py-2">
-                            <div class="fw-semibold text-truncate" style="max-width: 180px;">{{ auth()->user()->name }}</div>
-                            <div class="text-muted small">{{ auth()->user()->email }}</div>
-                            <span class="badge bg-{{ auth()->user()->role->badgeClass() }} mt-1">
-                                {{ auth()->user()->role->label() }}
-                            </span>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                <i class="bi bi-person-gear me-2"></i>Profil Saya
-                            </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="dropdown-item text-danger">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Keluar
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
             </div>
         </div>
     </nav>

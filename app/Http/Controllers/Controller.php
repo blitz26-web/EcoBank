@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
 /**
- * Controller dasar EcoBank.
+ * Controller dasar Kas Hijau.
  *
  * Trait AuthorizesRequests menyediakan $this->authorize('ability', $model)
  * untuk memanggil policy; ValidatesRequests menyediakan $this->validate().

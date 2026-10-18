@@ -39,18 +39,18 @@ class DummyUserSeeder extends Seeder
      * @var list<array{0: string, 1: string, 2: string, 3: int}>
      */
     private const DUMMY_ACCOUNTS = [
-        ['andi@ecobank.test', 'Andi Pratama', '081200000005', 2450],
-        ['dewi@ecobank.test', 'Dewi Lestari', '081200000006', 1830],
-        ['agus@ecobank.test', 'Agus Wijaya', '081200000007', 920],
-        ['rina@ecobank.test', 'Rina Marlina', '081200000008', 3750],
-        ['joko@ecobank.test', 'Joko Prasetyo', '081200000009', 640],
-        ['fitri@ecobank.test', 'Fitri Handayani', '081200000010', 2880],
-        ['rudi@ecobank.test', 'Rudi Hartono', '081200000011', 1500],
-        ['nina@ecobank.test', 'Nina Kurnia', '081200000012', 110],
-        ['eko@ecobank.test', 'Eko Prabowo', '081200000013', 5000],
-        ['lina@ecobank.test', 'Lina Kartika', '081200000014', 2210],
-        ['doni@ecobank.test', 'Doni Firmansyah', '081200000015', 760],
-        ['maya@ecobank.test', 'Maya Anggraini', '081200000016', 3400],
+        ['andi@kashijau.test', 'Andi Pratama', '081200000005', 2450],
+        ['dewi@kashijau.test', 'Dewi Lestari', '081200000006', 1830],
+        ['agus@kashijau.test', 'Agus Wijaya', '081200000007', 920],
+        ['rina@kashijau.test', 'Rina Marlina', '081200000008', 3750],
+        ['joko@kashijau.test', 'Joko Prasetyo', '081200000009', 640],
+        ['fitri@kashijau.test', 'Fitri Handayani', '081200000010', 2880],
+        ['rudi@kashijau.test', 'Rudi Hartono', '081200000011', 1500],
+        ['nina@kashijau.test', 'Nina Kurnia', '081200000012', 110],
+        ['eko@kashijau.test', 'Eko Prabowo', '081200000013', 5000],
+        ['lina@kashijau.test', 'Lina Kartika', '081200000014', 2210],
+        ['doni@kashijau.test', 'Doni Firmansyah', '081200000015', 760],
+        ['maya@kashijau.test', 'Maya Anggraini', '081200000016', 3400],
     ];
 
     public function __construct(private readonly PointLedgerService $ledger)

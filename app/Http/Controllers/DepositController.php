@@ -76,7 +76,7 @@ class DepositController extends Controller
                 : collect(),
             'isCounterMode' => $isCounterMode,
             'maxItems' => StoreDepositRequest::MAX_ITEMS,
-            'pointValue' => (int) config('ecobank.point_value', 0),
+            'pointValue' => (int) config('kas-hijau.point_value', 0),
             'oldItems' => collect((array) old('items', []))
                 ->filter(fn ($item) => is_array($item) && ((string) ($item['waste_category_id'] ?? '') !== ''))
                 ->values(),

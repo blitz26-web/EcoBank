@@ -7,7 +7,7 @@ Pemakaian:
 
 Ikon ditentukan murni lewat CSS (lihat .theme-icon-* pada layout):
 mode terang menampilkan bulan (ajakan ke gelap), mode gelap menampilkan matahari.
-Tersimpan di localStorage (kunci: ecobank-theme) agar konsisten antar halaman.
+Tersimpan di localStorage (kunci: kashijau-theme) agar konsisten antar halaman.
 --}}
 <button type="button" id="themeToggle" aria-label="Ganti tema terang/gelap"
         title="Ganti tema terang/gelap"
@@ -33,7 +33,7 @@ Tersimpan di localStorage (kunci: ecobank-theme) agar konsisten antar halaman.
 
             root.setAttribute('data-bs-theme', next);
             try {
-                window.localStorage.setItem('ecobank-theme', next);
+                window.localStorage.setItem('kashijau-theme', next);
             } catch (e) {
                 /* Abaikan bila penyimpanan tidak tersedia; tema tetap berganti untuk sesi ini. */
             }

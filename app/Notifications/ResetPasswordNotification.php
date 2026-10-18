@@ -33,9 +33,9 @@ class ResetPasswordNotification extends ResetPassword
         );
 
         return (new MailMessage())
-            ->subject('Atur Ulang Kata Sandi - EcoBank')
+            ->subject('Atur Ulang Kata Sandi - Kas Hijau')
             ->greeting('Halo, '.$notifiable->name.'!')
-            ->line('Anda menerima email ini karena kami menerima permintaan atur ulang kata sandi untuk akun EcoBank Anda.')
+            ->line('Anda menerima email ini karena kami menerima permintaan atur ulang kata sandi untuk akun Kas Hijau Anda.')
             ->action('Atur Ulang Kata Sandi', $resetUrl)
             ->line(sprintf(
                 'Tautan ini kedaluwarsa dalam %d menit. Jika tombol tidak berfungsi, salin dan tempel URL berikut ke peramban Anda:',
@@ -43,6 +43,6 @@ class ResetPasswordNotification extends ResetPassword
             ))
             ->line($resetUrl)
             ->line('Jika Anda tidak meminta atur ulang kata sandi, tidak perlu melakukan apa pun - kata sandi Anda tetap aman.')
-            ->salutation('Salam hangat, Tim EcoBank');
+            ->salutation('Salam hangat, Tim Kas Hijau');
     }
 }

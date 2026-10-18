@@ -33,10 +33,10 @@ class DemoUserSeeder extends Seeder
      * @var list<array{0: string, 1: string, 2: string, 3: UserRole, 4: int}>
      */
     private const DEMO_ACCOUNTS = [
-        ['admin@ecobank.test', 'Admin EcoBank', '081200000001', UserRole::Admin, 0],
-        ['petugas@ecobank.test', 'Petugas Loket 1', '081200000002', UserRole::Petugas, 0],
-        ['warga@ecobank.test', 'Budi Santoso', '081200000003', UserRole::Warga, 1500],
-        ['sari@ecobank.test', 'Sari Wulandari', '081200000004', UserRole::Warga, 0],
+        ['admin@kashijau.test', 'Admin Kas Hijau', '081200000001', UserRole::Admin, 0],
+        ['petugas@kashijau.test', 'Petugas Loket 1', '081200000002', UserRole::Petugas, 0],
+        ['warga@kashijau.test', 'Budi Santoso', '081200000003', UserRole::Warga, 1500],
+        ['sari@kashijau.test', 'Sari Wulandari', '081200000004', UserRole::Warga, 0],
     ];
 
     public function run(): void

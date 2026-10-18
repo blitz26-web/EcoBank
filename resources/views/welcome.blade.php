@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>EcoBank | Ubah Sampah Menjadi Poin</title>
+    <title>Kas Hijau | Ubah Sampah Menjadi Poin</title>
 
     {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
@@ -76,7 +76,7 @@
                 <span class="brand-icon" style="width: 2.25rem; height: 2.25rem; border-radius: .65rem; font-size: 1.1rem;">
                     <i class="bi bi-recycle"></i>
                 </span>
-                <span class="text-success">Eco</span>Bank
+                <span class="text-success">Kas Hijau</span>
             </span>
             <div class="d-flex align-items-center gap-2">
                 @include('partials.theme-toggle')
@@ -90,7 +90,7 @@
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bold mb-3">Ubah Sampah Menjadi <span class="text-success">Poin</span></h1>
             <p class="lead text-muted mb-4">
-                EcoBank mencatat setoran sampah, menghitung poin otomatis, dan mencairkannya
+                Kas Hijau mencatat setoran sampah, menghitung poin otomatis, dan mencairkannya
                 menjadi uang tunai &mdash; semuanya transparan dan teraudit.
             </p>
             <div class="d-flex justify-content-center gap-2 flex-wrap">
@@ -144,7 +144,7 @@
     </main>
 
     <footer class="text-center text-muted small pb-4">
-        &copy; {{ date('Y') }} EcoBank &mdash; Bank sampah digital untuk lingkungan lebih bersih.
+        &copy; {{ date('Y') }} Kas Hijau &mdash; Bank sampah digital untuk lingkungan lebih bersih.
     </footer>
 </body>
 </html>

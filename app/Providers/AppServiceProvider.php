@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
         /*
          * Tampilan pagination memakai markup Bootstrap 5 (pagination links,
          * tombol prev/next) — default Laravel bergaya Tailwind sehingga
-         * wajib diarahkan ke preset Bootstrap untuk stack EcoBank.
+         * wajib diarahkan ke preset Bootstrap untuk stack Kas Hijau.
          */
         Paginator::useBootstrapFive();
 

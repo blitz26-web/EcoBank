@@ -7,7 +7,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 
 /**
- * Seeder utama EcoBank.
+ * Seeder utama Kas Hijau.
  *
  * Menjalankan seeder demo secara berurutan:
  *  1. WasteCategorySeeder    - kategori sampah contoh (idempotent).
@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('Mengisi data awal EcoBank...');
+        $this->command->info('Mengisi data awal Kas Hijau...');
 
         $this->call([
             WasteCategorySeeder::class,

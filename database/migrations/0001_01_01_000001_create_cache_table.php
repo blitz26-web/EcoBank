@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Migrasi bawaan Laravel (disertakan agar paket siap pakai):
+ * membuat tabel cache dan cache_locks (driver cache/lock database).
+ */
 return new class extends Migration
 {
     /**
@@ -14,13 +18,13 @@ return new class extends Migration
         Schema::create('cache', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->mediumText('value');
-            $table->bigInteger('expiration')->index();
+            $table->integer('expiration');
         });
 
         Schema::create('cache_locks', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->string('owner');
-            $table->bigInteger('expiration')->index();
+            $table->integer('expiration');
         });
     }
 

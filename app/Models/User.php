@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * Model user EcoBank.
+ * Model user Kas Hijau.
  *
  * Verifikasi email DINONAKTIFKAN sesuai permintaan: model ini tidak
  * mengimplementasikan MustVerifyEmail sehingga akun baru langsung dapat
