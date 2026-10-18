@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'EcoBank') | EcoBank</title>
+    <title>@yield('title', 'Kas Hijau') | Kas Hijau</title>
 
     {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
@@ -183,7 +183,7 @@
     </main>
 
     <footer class="border-top bg-body py-3 text-center text-muted small">
-        &copy; {{ date('Y') }} EcoBank &mdash; Ubah sampah menjadi poin.
+        &copy; {{ date('Y') }} Kas Hijau &mdash; Ubah sampah menjadi poin.
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'EcoBank') | EcoBank</title>
+    <title>@yield('title', 'Kas Hijau') | Kas Hijau</title>
 
     {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
@@ -65,7 +65,7 @@
             {{-- Logo brand --}}
             <div class="text-center mb-4">
                 <span class="brand-icon mb-2"><i class="bi bi-recycle"></i></span>
-                <h1 class="h3 fw-bold text-success mb-0">EcoBank</h1>
+                <h1 class="h3 fw-bold text-success mb-0">Kas Hijau</h1>
                 <p class="text-muted small mb-0">Bank Sampah Digital</p>
             </div>
 
@@ -79,7 +79,7 @@
     @include('partials.theme-toggle', ['floating' => true])
 
     <footer class="text-center text-muted small pb-4">
-        &copy; {{ date('Y') }} EcoBank &mdash; Ubah sampah menjadi poin.
+        &copy; {{ date('Y') }} Kas Hijau &mdash; Ubah sampah menjadi poin.
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

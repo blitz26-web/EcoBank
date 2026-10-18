@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>@yield('title', 'Terjadi Kesalahan') | EcoBank</title>
+    <title>@yield('title', 'Terjadi Kesalahan') | Kas Hijau</title>
 
     {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
@@ -67,7 +67,7 @@
     @include('partials.theme-toggle', ['floating' => true])
 
     <footer class="text-center text-muted small pb-4">
-        &copy; {{ date('Y') }} EcoBank &mdash; Bank sampah digital.
+        &copy; {{ date('Y') }} Kas Hijau &mdash; Bank sampah digital.
     </footer>
 </body>
 </html>
