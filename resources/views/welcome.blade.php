@@ -6,7 +6,6 @@
 
     <title>Kas Hijau | Ubah Sampah Menjadi Poin</title>
 
-    {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -50,7 +49,6 @@
             box-shadow: 0 .75rem 2rem rgba(0, 0, 0, .5);
             border: 1px solid var(--bs-border-color);
         }
-        /* Ikon tombol tema: bulan saat terang, matahari saat gelap. */
         [data-bs-theme="light"] .theme-icon-sun { display: none; }
         [data-bs-theme="dark"] .theme-icon-moon { display: none; }
         .theme-toggle-navbar {
@@ -146,5 +144,7 @@
     <footer class="text-center text-muted small pb-4">
         &copy; {{ date('Y') }} Kas Hijau &mdash; Bank sampah digital untuk lingkungan lebih bersih.
     </footer>
+
+    @include('partials.motion')
 </body>
 </html>

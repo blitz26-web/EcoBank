@@ -9,16 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Menampilkan halaman "silakan cek email Anda" untuk pengguna yang
- * belum memverifikasi alamat email.
- */
 class EmailVerificationPromptController extends Controller
 {
-    /**
-     * Pengguna yang sudah terverifikasi langsung diarahkan ke dashboard;
-     * sisanya melihat halaman instruksi verifikasi.
-     */
     public function __invoke(Request $request): RedirectResponse|View
     {
         return $request->user()->hasVerifiedEmail()

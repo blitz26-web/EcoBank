@@ -11,7 +11,6 @@
             <form method="POST" action="{{ route('password.update') }}" novalidate>
                 @csrf
 
-                {{-- Token dari tautan email --}}
                 <input type="hidden" name="token" value="{{ $token }}">
 
                 <div class="mb-3">

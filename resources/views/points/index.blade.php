@@ -13,7 +13,6 @@
         </span>
     </div>
 
-    {{-- ==================== Filter Arah Mutasi ==================== --}}
     <div class="btn-group btn-group-sm mb-3 flex-wrap" role="group" aria-label="Filter arah mutasi">
         <a href="{{ route('points.index') }}" class="btn {{ $typeFilter === null ? 'btn-success' : 'btn-outline-success' }}">
             Semua

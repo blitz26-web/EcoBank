@@ -11,22 +11,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
-/**
- * CRUD master data kategori sampah — hanya admin.
- *
- * Katalog kategori menentukan tarif poin per satuan; perubahan tarif
- * HANYA memengaruhi setoran yang dibuat SETELAH perubahan, karena
- * points_earned tersimpan permanen di deposit_items (snapshot historis).
- *
- * Hapus kategori yang masih dipakai deposit_items diblokir oleh FK
- * restrictOnDelete di level database; controller menangkap QueryException
- * dan menerjemahkannya menjadi pesan yang ramah pengguna.
- */
 class WasteCategoryController extends Controller
 {
-    /**
-     * Daftar kategori + jumlah pemakaian + form modal tambah/ubah.
-     */
     public function index(): View
     {
         $categories = WasteCategory::query()
@@ -39,9 +25,6 @@ class WasteCategoryController extends Controller
         ]);
     }
 
-    /**
-     * Simpan kategori baru.
-     */
     public function store(StoreWasteCategoryRequest $request): RedirectResponse
     {
         WasteCategory::query()->create($request->validated());
@@ -51,9 +34,6 @@ class WasteCategoryController extends Controller
             ->with('status', 'category-created');
     }
 
-    /**
-     * Perbarui kategori (nama, satuan, tarif poin).
-     */
     public function update(StoreWasteCategoryRequest $request, WasteCategory $kategori): RedirectResponse
     {
         $kategori->update($request->validated());
@@ -63,9 +43,6 @@ class WasteCategoryController extends Controller
             ->with('status', 'category-updated');
     }
 
-    /**
-     * Hapus kategori; ditolak bila masih dipakai data setoran.
-     */
     public function destroy(WasteCategory $kategori): RedirectResponse
     {
         Gate::authorize('delete', $kategori);

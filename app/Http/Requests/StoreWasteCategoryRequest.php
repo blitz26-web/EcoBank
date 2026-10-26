@@ -8,28 +8,17 @@ use App\Models\WasteCategory;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Validasi form kategori sampah (dipakai untuk tambah & ubah).
- *
- * Deteksi operasi: POST -> create, PUT/PATCH -> update (untuk authorize
- * policy dan aturan unique yang mengabaikan baris yang sedang diedit).
- */
 class StoreWasteCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $ability = $this->isMethod('POST') ? 'create' : 'update';
 
-        // WasteCategoryPolicy — hanya admin; petugas/warga ditolak.
         return $this->user()->can($ability, WasteCategory::class);
     }
 
-    /**
-     * @return array<string, list<string>>
-     */
     public function rules(): array
     {
-        /** @var WasteCategory|null $kategori */
         $kategori = $this->route('kategori');
 
         return [
@@ -44,9 +33,6 @@ class StoreWasteCategoryRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [

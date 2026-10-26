@@ -2,16 +2,6 @@
 
 declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Baris bahasa validasi (id) - subset aturan yang dipakai Kas Hijau
-|--------------------------------------------------------------------------
-| Menggantikan pesan validasi bawaan yang berbahasa Inggris.
-| Aktifkan dengan APP_LOCALE=id di file .env.
-| FormRequest yang menyediakan pesan khusus tetap memakai pesannya
-| sendiri; file ini menjadi fallback global untuk aturan lain.
-*/
-
 return [
 
     'accepted' => ':attribute harus diterima.',

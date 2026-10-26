@@ -21,7 +21,6 @@
         </span>
     </div>
 
-    {{-- ==================== Statistik ==================== --}}
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
             <div class="card app-card h-100">
@@ -29,7 +28,7 @@
                     <span class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></span>
                     <div>
                         <div class="text-muted small">Setoran Pending</div>
-                        <div class="fs-4 fw-bold">{{ number_format($pendingDeposits->count(), 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $pendingDeposits->count() }}">{{ number_format($pendingDeposits->count(), 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -40,7 +39,7 @@
                     <span class="stat-icon bg-info-subtle text-info"><i class="bi bi-cash-stack"></i></span>
                     <div>
                         <div class="text-muted small">Penarikan Menunggu</div>
-                        <div class="fs-4 fw-bold">{{ number_format($requestedWithdrawals->count(), 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $requestedWithdrawals->count() }}">{{ number_format($requestedWithdrawals->count(), 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -51,7 +50,7 @@
                     <span class="stat-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></span>
                     <div>
                         <div class="text-muted small">Setoran Selesai Hari Ini</div>
-                        <div class="fs-4 fw-bold">{{ number_format($completedToday, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $completedToday }}">{{ number_format($completedToday, 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -59,7 +58,6 @@
     </div>
 
     <div class="row g-4">
-        {{-- ==================== Setoran Pending ==================== --}}
         <div class="col-12">
             <div class="card app-card">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -112,7 +110,6 @@
             </div>
         </div>
 
-        {{-- ==================== Penarikan Requested ==================== --}}
         <div class="col-12">
             <div class="card app-card">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">

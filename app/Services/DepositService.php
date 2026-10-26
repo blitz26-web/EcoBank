@@ -8,48 +8,19 @@ use App\Enums\DepositStatus;
 use App\Models\Deposit;
 use App\Models\User;
 use App\Models\WasteCategory;
+use App\Notifications\DepositVerifiedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
-/**
- * Service yang menangani seluruh alur bisnis penyetoran sampah Kas Hijau.
- *
- * Prinsip utama:
- *  1. ATOMIK     — semua operasi dibungkus DB::transaction(); saldo warga,
- *                  rincian item, dan entri point ledger hanya tersimpan
- *                  bila SELURUH proses berhasil.
- *  2. TERKUNCI   — baris user dan deposit dikunci dengan lockForUpdate()
- *                  (SELECT ... FOR UPDATE) untuk mencegah race condition
- *                  ketika saldo diubah oleh transaksi bersamaan.
- *  3. AUDITABLE  — setiap perubahan users.balance_points WAJIB mencatat
- *                  entri baru ke point_ledgers (ledger bersifat imutabel),
- *                  didelegasikan ke PointLedgerService sebagai satu pintu.
- *  4. AMAN       — poin dihitung ulang di sisi server; angka dari klien
- *                  tidak pernah dipercaya.
- */
 class DepositService
 {
     public function __construct(private readonly PointLedgerService $ledger)
     {
     }
 
-    /**
-     * Buat penyetoran baru beserta rinciannya.
-     *
-     * Dua skenario yang didukung:
-     *  1. Warga mengajukan setoran mandiri   -> status Pending, poin BELUM masuk.
-     *  2. Petugas mencatat setoran di loket  -> status Completed, poin langsung masuk.
-     *
-     * @param  User $holder        Warga pemilik rekening poin.
-     * @param  array<int, array{waste_category_id: int|string, weight_in_kg: float|int|string}> $items
-     * @param  User|null $officer  Petugas yang mencatat (opsional).
-     * @param  DepositStatus $initialStatus  Status awal setoran (Pending atau Completed).
-     *
-     * @throws InvalidArgumentException Bila daftar item kosong, berat tidak valid,
-     *                                  atau status awal tidak sah.
-     */
     public function createDeposit(
         User $holder,
         array $items,
@@ -64,12 +35,9 @@ class DepositService
             throw new InvalidArgumentException('Setoran baru tidak dapat dibuat dengan status dibatalkan.');
         }
 
-        return DB::transaction(function () use ($holder, $items, $officer, $initialStatus): Deposit {
-            // Kunci baris user agar saldo tidak berubah oleh transaksi lain
-            // selama proses ini berjalan (mencegah race condition).
+        $deposit = DB::transaction(function () use ($holder, $items, $officer, $initialStatus): Deposit {
             $holder = $this->lockUser((int) $holder->getKey());
 
-            // Validasi + hitung poin di sisi server sebelum menulis ke database.
             $preparedItems = $this->prepareItems($items);
             $totalPoints = array_sum(array_column($preparedItems, 'points'));
 
@@ -89,7 +57,6 @@ class DepositService
                 ]);
             }
 
-            // Poin hanya dikreditkan apabila setoran langsung selesai diverifikasi.
             if ($initialStatus === DepositStatus::Completed) {
                 $this->ledger->credit(
                     $holder,
@@ -101,18 +68,17 @@ class DepositService
 
             return $deposit->fresh(['items.wasteCategory', 'user', 'officer']);
         });
+
+        if ($deposit->status === DepositStatus::Completed) {
+            $this->notifyHolder($deposit);
+        }
+
+        return $deposit;
     }
 
-    /**
-     * Verifikasi setoran berstatus Pending: tandai selesai dan kreditkan
-     * poin ke saldo warga beserta catatan ledger.
-     *
-     * @throws RuntimeException Bila setoran sudah diproses sebelumnya (bukan Pending).
-     */
     public function completeDeposit(Deposit $deposit, User $officer): Deposit
     {
-        return DB::transaction(function () use ($deposit, $officer): Deposit {
-            // Kunci baris setoran agar tidak bisa diverifikasi / dibatalkan ganda.
+        $deposit = DB::transaction(function () use ($deposit, $officer): Deposit {
             $deposit = Deposit::query()
                 ->whereKey($deposit->getKey())
                 ->lockForUpdate()
@@ -142,17 +108,12 @@ class DepositService
 
             return $deposit->fresh(['items.wasteCategory', 'user', 'officer']);
         });
+
+        $this->notifyHolder($deposit);
+
+        return $deposit;
     }
 
-    /**
-     * Batalkan setoran yang masih Pending.
-     *
-     * Setoran berstatus Completed TIDAK dibatalkan di sini — pengembalian
-     * poin harus dilakukan lewat entri ledger debit terpisah agar audit
-     * trail tetap konsisten (implementasi menyusul pada langkah berikutnya).
-     *
-     * @throws RuntimeException Bila setoran tidak berstatus Pending.
-     */
     public function cancelDeposit(Deposit $deposit): Deposit
     {
         return DB::transaction(function () use ($deposit): Deposit {
@@ -175,14 +136,15 @@ class DepositService
         });
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Private helpers                                                     */
-    /* ------------------------------------------------------------------ */
+    private function notifyHolder(Deposit $deposit): void
+    {
+        try {
+            $deposit->user->notify(new DepositVerifiedNotification($deposit));
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
 
-    /**
-     * Ambil ulang user dengan row lock (SELECT ... FOR UPDATE).
-     * WAJIB dipanggil dari dalam DB::transaction().
-     */
     private function lockUser(int $userId): User
     {
         return User::query()
@@ -191,12 +153,6 @@ class DepositService
             ->firstOrFail();
     }
 
-    /**
-     * Validasi & hitung poin setiap item di sisi server.
-     *
-     * @param  array<int, array{waste_category_id: int|string, weight_in_kg: float|int|string}> $items
-     * @return array<int, array{category: WasteCategory, weight: float, points: int}>
-     */
     private function prepareItems(array $items): array
     {
         $prepared = [];
@@ -231,12 +187,6 @@ class DepositService
         return $prepared;
     }
 
-    /**
-     * Bangun kode setoran unik, contoh: DEP-20261010-7F3K9Q.
-     *
-     * Unique index pada kolom deposit_code berperan sebagai pengaman
-     * terakhir terhadap tabrakan kode akibat request yang bersamaan.
-     */
     private function generateDepositCode(): string
     {
         do {

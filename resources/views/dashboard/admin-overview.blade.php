@@ -20,7 +20,6 @@
         </div>
     </div>
 
-    {{-- ==================== Statistik Pengguna ==================== --}}
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="card app-card h-100">
@@ -28,7 +27,7 @@
                     <span class="stat-icon bg-success-subtle text-success"><i class="bi bi-people"></i></span>
                     <div>
                         <div class="text-muted small">Warga</div>
-                        <div class="fs-4 fw-bold">{{ number_format($wargaCount, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $wargaCount }}">{{ number_format($wargaCount, 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -39,7 +38,7 @@
                     <span class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-person-workspace"></i></span>
                     <div>
                         <div class="text-muted small">Petugas</div>
-                        <div class="fs-4 fw-bold">{{ number_format($petugasCount, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $petugasCount }}">{{ number_format($petugasCount, 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -50,7 +49,7 @@
                     <span class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-shield-lock"></i></span>
                     <div>
                         <div class="text-muted small">Admin</div>
-                        <div class="fs-4 fw-bold">{{ number_format($adminCount, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $adminCount }}">{{ number_format($adminCount, 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -61,7 +60,7 @@
                     <span class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-star-fill"></i></span>
                     <div>
                         <div class="text-muted small">Poin Beredar</div>
-                        <div class="fs-4 fw-bold">{{ number_format($circulatingPoints, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold"><span data-count-up="{{ $circulatingPoints }}">{{ number_format($circulatingPoints, 0, ',', '.') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -69,7 +68,6 @@
     </div>
 
     <div class="row g-4 mb-4">
-        {{-- ==================== Aktivitas Hari Ini ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0">
@@ -94,7 +92,6 @@
             </div>
         </div>
 
-        {{-- ==================== Rekonsiliasi Ledger ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -161,7 +158,6 @@
     </div>
 
     <div class="row g-4 mb-4">
-        {{-- ==================== Setoran Terbaru ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -203,7 +199,6 @@
             </div>
         </div>
 
-        {{-- ==================== Penarikan Terbaru ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -250,7 +245,6 @@
     </div>
 
     <div class="row g-4">
-        {{-- ==================== Distribusi Saldo Tertinggi ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0">
@@ -281,7 +275,6 @@
             </div>
         </div>
 
-        {{-- ==================== Ringkasan Antrian ==================== --}}
         <div class="col-12 col-lg-6">
             <div class="card app-card h-100">
                 <div class="card-header bg-body border-0 pt-3 pb-0">

@@ -11,33 +11,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
-/**
- * Service bersama pemilik logika mutasi saldo poin (kredit/debit).
- *
- * Ini SATU-SATUNYA tempat di mana users.balance_points boleh diubah,
- * sehingga aturan imutabilitas ledger mustahil terlewat: setiap mutasi
- * selalu diikuti ENTRI BARU di point_ledgers yang mencatat saldo
- * setelah mutasi (balance_after) sebagai jejak audit.
- *
- * Dipakai bersama oleh DepositService (kredit poin setoran) dan
- * WithdrawalService (debit pengajuan tarik / kredit refund penolakan).
- *
- * Kedua metode mengasumsikan PEMANGGIL sudah:
- *  1. Membungkus operasi dalam DB::transaction(), dan
- *  2. Mengunci baris user dengan lockForUpdate().
- */
 class PointLedgerService
 {
-    /**
-     * Kreditkan (tambah) poin ke saldo user.
-     *
-     * @param  User $holder  User yang barisnya SUDAH dikunci lockForUpdate().
-     * @param  int $amount   Jumlah poin (selalu positif).
-     * @param  Model $reference  Model pemicu (Deposit, Withdrawal, dll).
-     * @param  string $description  Keterangan manusiawi untuk audit.
-     *
-     * @throws InvalidArgumentException Bila jumlah tidak positif.
-     */
     public function credit(User $holder, int $amount, Model $reference, string $description): PointLedger
     {
         $this->assertPositive($amount);
@@ -50,17 +25,6 @@ class PointLedgerService
         return $this->record($holder, LedgerType::Credit, $amount, $reference, $description, $balanceAfter);
     }
 
-    /**
-     * Debitkan (kurangi) poin dari saldo user.
-     *
-     * @param  User $holder  User yang barisnya SUDAH dikunci lockForUpdate().
-     * @param  int $amount   Jumlah poin (selalu positif).
-     * @param  Model $reference  Model pemicu (Withdrawal, dll).
-     * @param  string $description  Keterangan manusiawi untuk audit.
-     *
-     * @throws InsufficientPointsException Bila jumlah melebihi saldo saat ini.
-     * @throws InvalidArgumentException Bila jumlah tidak positif.
-     */
     public function debit(User $holder, int $amount, Model $reference, string $description): PointLedger
     {
         $this->assertPositive($amount);
@@ -81,10 +45,6 @@ class PointLedgerService
         return $this->record($holder, LedgerType::Debit, $amount, $reference, $description, $balanceAfter);
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Private helpers                                                     */
-    /* ------------------------------------------------------------------ */
-
     private function assertPositive(int $amount): void
     {
         if ($amount <= 0) {
@@ -92,9 +52,6 @@ class PointLedgerService
         }
     }
 
-    /**
-     * Catat entri ledger baru (audit trail imutabel) dan kembalikan entri itu.
-     */
     private function record(
         User $holder,
         LedgerType $type,

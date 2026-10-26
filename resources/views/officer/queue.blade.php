@@ -14,7 +14,6 @@
     </div>
 
     <div class="row g-4">
-        {{-- ==================== Setoran Pending ==================== --}}
         <div class="col-12">
             <div class="card app-card">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -84,7 +83,6 @@
             </div>
         </div>
 
-        {{-- ==================== Penarikan Requested ==================== --}}
         <div class="col-12">
             <div class="card app-card">
                 <div class="card-header bg-body border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
@@ -162,6 +160,5 @@
         </div>
     </div>
 
-    {{-- Modal tolak penarikan (partial dipakai bersama halaman riwayat penarikan) --}}
     @include('partials.modal-reject-withdrawal')
 @endsection

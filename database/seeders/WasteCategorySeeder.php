@@ -7,16 +7,8 @@ namespace Database\Seeders;
 use App\Models\WasteCategory;
 use Illuminate\Database\Seeder;
 
-/**
- * Kategori sampah contoh (idempotent - updateOrCreate berdasarkan nama unik).
- *
- * point_per_unit = jumlah poin per 1 kg (unit default).
- * Contoh: 2.5 kg Botol PET x 10 poin/kg = 25 poin
- *         (pembulatan round() terpusat di WasteCategory::calculatePoints()).
- */
 class WasteCategorySeeder extends Seeder
 {
-    /** @var list<array{name: string, unit: string, point_per_unit: int}> */
     private const CATEGORIES = [
         ['name' => 'Botol PET', 'unit' => 'kg', 'point_per_unit' => 10],
         ['name' => 'Kertas HVS', 'unit' => 'kg', 'point_per_unit' => 5],

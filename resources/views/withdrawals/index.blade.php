@@ -15,7 +15,6 @@
         @endif
     </div>
 
-    {{-- ==================== Filter Status ==================== --}}
     <div class="btn-group btn-group-sm mb-3 flex-wrap" role="group" aria-label="Filter status penarikan">
         <a href="{{ route('withdrawals.index') }}" class="btn {{ $statusFilter === null ? 'btn-success' : 'btn-outline-success' }}">
             Semua

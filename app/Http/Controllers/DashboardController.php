@@ -10,27 +10,13 @@ use App\Enums\WithdrawalStatus;
 use App\Models\Deposit;
 use App\Models\User;
 use App\Models\Withdrawal;
+use App\Services\GamificationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Dashboard ringkas per peran (Langkah 3) + panel admin (revisi UI).
- *
- * Route `/dashboard` melayani semua peran: setelah login/register
- * pengguna diarahkan ke sini, lalu view yang dirender menyesuaikan
- * perannya (warga / petugas / admin).
- *
- * Route `/admin` (admin.overview, middleware role:admin) SENGAJA DIBEDAKAN
- * dari `/dashboard`: isinya panel lengkap khusus admin — semua statistik
- * ringkasan DITAMBAH rekonsiliasi ledger, transaksi terbaru, top saldo
- * warga, dan ringkasan antrian kerja. Dashboard admin tetap ringkas.
- */
 class DashboardController extends Controller
 {
-    /**
-     * Dashboard utama — konten mengikuti peran user yang login.
-     */
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -42,34 +28,72 @@ class DashboardController extends Controller
         };
     }
 
-    /**
-     * Antrian petugas — dilindungi middleware `role:petugas,admin`.
-     */
     public function petugas(Request $request): View
     {
         return $this->renderPetugas();
     }
 
-    /**
-     * Panel admin lengkap — dilindungi middleware `role:admin`.
-     *
-     * Sengaja BUKAN duplikat dashboard: berisi semua statistik ringkasan
-     * plus data mendalam yang hanya relevan bagi admin (rekonsiliasi
-     * ledger, transaksi terbaru lintas warga, distribusi saldo, antrian).
-     */
     public function admin(Request $request): View
     {
         return $this->renderAdminOverview();
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Private render helpers                                              */
-    /* ------------------------------------------------------------------ */
+    private function trendSeries(?int $userId): array
+    {
+        $query = DB::table('deposit_items')
+            ->join('deposits', 'deposits.id', '=', 'deposit_items.deposit_id')
+            ->where('deposits.status', DepositStatus::Completed->value)
+            ->whereBetween('deposits.created_at', [
+                now()->subDays(29)->startOfDay(),
+                now()->endOfDay(),
+            ]);
 
-    /**
-     * Dashboard warga: kartu saldo poin + nilai Rupiah, statistik
-     * setoran & penarikan, dan 5 mutasi poin terakhir.
-     */
+        if ($userId !== null) {
+            $query->where('deposits.user_id', $userId);
+        }
+
+        $rows = $query
+            ->selectRaw('DATE(deposits.created_at) as day')
+            ->selectRaw('SUM(deposit_items.points_earned) as points')
+            ->groupBy('day')
+            ->pluck('points', 'day');
+
+        $labels = [];
+        $data = [];
+
+        for ($i = 29; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $labels[] = $day->translatedFormat('d M');
+            $data[] = (int) ($rows[$day->format('Y-m-d')] ?? 0);
+        }
+
+        return [$labels, $data];
+    }
+
+    private function categorySeries(?int $userId): array
+    {
+        $query = DB::table('deposit_items')
+            ->join('deposits', 'deposits.id', '=', 'deposit_items.deposit_id')
+            ->join('waste_categories', 'waste_categories.id', '=', 'deposit_items.waste_category_id')
+            ->where('deposits.status', DepositStatus::Completed->value);
+
+        if ($userId !== null) {
+            $query->where('deposits.user_id', $userId);
+        }
+
+        $rows = $query
+            ->selectRaw('waste_categories.name as name')
+            ->selectRaw('SUM(deposit_items.points_earned) as points')
+            ->groupBy('waste_categories.name')
+            ->orderByDesc('points')
+            ->get();
+
+        return [
+            $rows->pluck('name')->all(),
+            $rows->pluck('points')->map(fn ($points) => (int) $points)->all(),
+        ];
+    }
+
     private function renderWarga(User $user): View
     {
         $depositStats = $user->deposits()
@@ -89,6 +113,11 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        [$trendLabels, $trendData] = $this->trendSeries((int) $user->getKey());
+        [$categoryLabels, $categoryData] = $this->categorySeries((int) $user->getKey());
+
+        $gamification = app(GamificationService::class);
+
         return view('dashboard.warga', [
             'user' => $user,
             'totalDeposits' => (int) $depositStats->total,
@@ -96,13 +125,16 @@ class DashboardController extends Controller
             'hasActiveWithdrawal' => $activeWithdrawal,
             'recentLedgers' => $recentLedgers,
             'pointValue' => (int) config('kas-hijau.point_value', 0),
+            'trendLabels' => $trendLabels,
+            'trendData' => $trendData,
+            'categoryLabels' => $categoryLabels,
+            'categoryData' => $categoryData,
+            'level' => $gamification->levelFor($user),
+            'badges' => $gamification->badgesFor($user),
+            'weeklyStreak' => $gamification->weeklyStreak($user),
         ]);
     }
 
-    /**
-     * Antrian petugas: setoran pending menunggu verifikasi dan
-     * penarikan requested menunggu diproses/ditolak.
-     */
     private function renderPetugas(): View
     {
         $pendingDeposits = Deposit::query()
@@ -131,9 +163,6 @@ class DashboardController extends Controller
         ]);
     }
 
-    /**
-     * Ringkasan admin: statistik user, poin beredar, aktivitas hari ini.
-     */
     private function renderAdmin(): View
     {
         $userCounts = User::query()
@@ -146,6 +175,19 @@ class DashboardController extends Controller
         $depositsToday = Deposit::query()->whereDate('created_at', today())->count();
         $withdrawalsToday = Withdrawal::query()->whereDate('created_at', today())->count();
 
+        [$trendLabels, $trendData] = $this->trendSeries(null);
+        [$categoryLabels, $categoryData] = $this->categorySeries(null);
+
+        $leaderboard = User::query()
+            ->where('role', UserRole::Warga->value)
+            ->join('point_ledgers', 'point_ledgers.user_id', '=', 'users.id')
+            ->where('point_ledgers.type', 'credit')
+            ->groupBy('users.id', 'users.name')
+            ->selectRaw('users.id, users.name, SUM(point_ledgers.amount) as total_earned')
+            ->orderByDesc('total_earned')
+            ->limit(5)
+            ->get();
+
         return view('dashboard.admin', [
             'wargaCount' => (int) ($userCounts['warga'] ?? 0),
             'petugasCount' => (int) ($userCounts['petugas'] ?? 0),
@@ -154,21 +196,14 @@ class DashboardController extends Controller
             'depositsToday' => $depositsToday,
             'withdrawalsToday' => $withdrawalsToday,
             'pointValue' => (int) config('kas-hijau.point_value', 0),
+            'trendLabels' => $trendLabels,
+            'trendData' => $trendData,
+            'categoryLabels' => $categoryLabels,
+            'categoryData' => $categoryData,
+            'leaderboard' => $leaderboard,
         ]);
     }
 
-    /**
-     * Panel admin lengkap untuk route `/admin` (admin.overview).
-     *
-     * Menyediakan:
-     *  1. Statistik pengguna & poin beredar (sama dengan dashboard ringkas).
-     *  2. REKONSILIASI LEDGER — validasi invarian "saldo = rekap point_ledgers"
-     *     per user langsung di database (HAVING). Bila ada selisih, baris
-     *     user bermasalah ditampilkan untuk ditindaklanjuti.
-     *  3. Transaksi terbaru (setoran & penarikan lintas semua warga).
-     *  4. Distribusi saldo — 5 warga dengan saldo tertinggi.
-     *  5. Ringkasan antrian kerja petugas (pending/requested) + CTA.
-     */
     private function renderAdminOverview(): View
     {
         $userCounts = User::query()
@@ -181,7 +216,6 @@ class DashboardController extends Controller
         $depositsToday = Deposit::query()->whereDate('created_at', today())->count();
         $withdrawalsToday = Withdrawal::query()->whereDate('created_at', today())->count();
 
-        /* --- 2. Rekonsiliasi ledger (invarian saldo vs buku besar) --- */
         $ledgerRekapSql = "COALESCE(SUM(CASE WHEN point_ledgers.type = 'credit' "
             . "THEN point_ledgers.amount ELSE -point_ledgers.amount END), 0)";
 
@@ -195,7 +229,6 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        /* --- 3. Transaksi terbaru lintas warga --- */
         $recentDeposits = Deposit::query()
             ->with('user')
             ->latest()
@@ -208,7 +241,6 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
-        /* --- 4. Distribusi saldo: 5 warga teratas --- */
         $topWarga = User::query()
             ->where('role', UserRole::Warga->value)
             ->orderByDesc('balance_points')
@@ -217,7 +249,6 @@ class DashboardController extends Controller
 
         $maxWargaBalance = (int) ($topWarga->first()?->balance_points ?? 0);
 
-        /* --- 5. Ringkasan antrian kerja petugas --- */
         $pendingDepositCount = Deposit::query()
             ->where('status', DepositStatus::Pending->value)
             ->count();

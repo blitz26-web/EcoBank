@@ -7,19 +7,8 @@ namespace App\Notifications;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
 
-/**
- * Notifikasi atur ulang kata sandi berbahasa Indonesia.
- *
- * Mewarisi ResetPassword bawaan framework; token dan kedaluwarsa tetap
- * dikelola framework, hanya pesan email yang dilokalkan.
- */
 class ResetPasswordNotification extends ResetPassword
 {
-    /**
-     * Bangun pesan email atur ulang kata sandi.
-     *
-     * @param  mixed $notifiable
-     */
     public function toMail($notifiable): MailMessage
     {
         $resetUrl = url(route('password.reset', [

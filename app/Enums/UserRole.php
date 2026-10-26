@@ -10,9 +10,6 @@ enum UserRole: string
     case Petugas = 'petugas';
     case Admin = 'admin';
 
-    /**
-     * Label yang ramah pengguna untuk ditampilkan di UI.
-     */
     public function label(): string
     {
         return match ($this) {
@@ -22,9 +19,6 @@ enum UserRole: string
         };
     }
 
-    /**
-     * Kelas warna badge Bootstrap 5 sesuai peran.
-     */
     public function badgeClass(): string
     {
         return match ($this) {

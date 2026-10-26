@@ -1,4 +1,3 @@
-{{-- Pesan status sukses (flash session) --}}
 @if (session('status'))
     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
         <i class="bi bi-check-circle-fill"></i>
@@ -27,6 +26,18 @@
                 Kategori sampah berhasil diperbarui.
             @elseif (session('status') === 'category-deleted')
                 Kategori sampah berhasil dihapus.
+            @elseif (session('status') === 'user-created')
+                Akun pengguna berhasil dibuat.
+            @elseif (session('status') === 'user-role-updated')
+                Peran pengguna berhasil diperbarui.
+            @elseif (session('status') === 'user-status-updated')
+                Status akun pengguna berhasil diperbarui.
+            @elseif (session('status') === 'goal-updated')
+                Target tabungan berhasil disimpan.
+            @elseif (session('status') === 'notification-read')
+                Notifikasi ditandai sudah dibaca.
+            @elseif (session('status') === 'notifications-read-all')
+                Semua notifikasi ditandai sudah dibaca.
             @else
                 {{ __(session('status')) }}
             @endif
@@ -35,7 +46,6 @@
     </div>
 @endif
 
-{{-- Pesan error umum (dari catch RuntimeException / QueryException di controller) --}}
 @if (session('error'))
     <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
         <i class="bi bi-x-octagon-fill"></i>
@@ -44,7 +54,6 @@
     </div>
 @endif
 
-{{-- Ringkasan error validasi --}}
 @if ($errors->any())
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <div class="fw-semibold mb-1">

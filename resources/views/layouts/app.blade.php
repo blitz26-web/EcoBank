@@ -7,16 +7,13 @@
 
     <title>@yield('title', 'Kas Hijau') | Kas Hijau</title>
 
-    {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
 
-    {{-- Bootstrap 5.3 + Bootstrap Icons via CDN --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-        /* Latar aplikasi: hijau muda di tema terang, hijau gelap pekat di tema gelap. */
         [data-bs-theme="light"] body {
             background-color: #f4f9f6;
         }
@@ -28,7 +25,6 @@
             display: flex;
             flex-direction: column;
         }
-        /* Transisi halus saat berganti tema (jangan berlebihan agar tetap ringan). */
         body, .card, .navbar, footer, .modal-content, .dropdown-menu {
             transition: background-color .2s ease-in-out, color .2s ease-in-out, border-color .2s ease-in-out;
         }
@@ -49,7 +45,6 @@
             box-shadow: 0 .25rem 1rem rgba(25, 135, 84, .08);
         }
         [data-bs-theme="dark"] .app-card {
-            /* Bayangan lebih dalam + garis tepi tipis agar kartu tetap terdefinisi di latar gelap. */
             box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .45);
             border: 1px solid var(--bs-border-color);
         }
@@ -63,10 +58,8 @@
             font-size: 1.35rem;
         }
 
-        /* Ikon tombol tema: bulan saat terang, matahari saat gelap. */
         [data-bs-theme="light"] .theme-icon-sun { display: none; }
         [data-bs-theme="dark"] .theme-icon-moon { display: none; }
-        /* Label kecil tambahan (sub-teks item dropdown akun). */
         .extra-small {
             font-size: .72rem;
         }
@@ -93,7 +86,6 @@
     </style>
 </head>
 <body>
-    {{-- ===================== Navbar ===================== --}}
     <nav class="navbar navbar-expand-lg bg-body shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{{ route('dashboard') }}">
@@ -101,10 +93,6 @@
                 <span class="text-success">Kas Hijau</span>
             </a>
 
-            {{-- Klaster kanan: pengalih tema, menu akun, dan tombol menu.
-                 DIKELUARKAN dari menu collapse agar SELALU terlihat di bar
-                 navbar — tidak perlu membuka menu (baris tiga) lebih dulu,
-                 baik di ponsel maupun desktop. --}}
             <div class="d-flex align-items-center gap-2 ms-auto order-lg-3">
                 @include('partials.theme-toggle')
 
@@ -115,9 +103,84 @@
                     $otherAccounts = $multiAccounts
                         ->reject(fn ($account): bool => (int) $account->id === (int) auth()->id())
                         ->values();
+                    try {
+                        $unreadCount = auth()->user()->unreadNotifications()->count();
+                        $recentNotifications = auth()->user()->notifications()
+                            ->latest()
+                            ->limit(5)
+                            ->get();
+                    } catch (\Throwable $e) {
+                        $unreadCount = 0;
+                        $recentNotifications = collect();
+                    }
                 @endphp
 
-                {{-- Menu pengguna + dukungan multi-akun (pola Google/Gmail) --}}
+                <div class="dropdown">
+                    <button class="btn border d-flex align-items-center justify-content-center theme-toggle-navbar position-relative"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                            aria-label="Notifikasi" title="Notifikasi">
+                        <i class="bi bi-bell fs-6"></i>
+                        @if ($unreadCount > 0)
+                            <span class="notification-dot"></span>
+                        @endif
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow p-0" style="min-width: 21rem;">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <span class="fw-semibold small">Notifikasi</span>
+                            @if ($unreadCount > 0)
+                                <form method="POST" action="{{ route('notifications.readAll') }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link btn-sm p-0 text-decoration-none small text-success">
+                                        Tandai semua dibaca
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+
+                        <div class="notif-scroll">
+                            @forelse ($recentNotifications as $notification)
+                                @php $payload = $notification->data; @endphp
+                                @if ($notification->unread())
+                                    <form method="POST" action="{{ route('notifications.read', $notification) }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item d-flex gap-2 py-2 border-bottom bg-success bg-opacity-10 notif-item">
+                                            <span class="notif-icon text-{{ $payload['tone'] ?? 'secondary' }}">
+                                                <i class="bi bi-{{ $payload['icon'] ?? 'bell-fill' }}"></i>
+                                            </span>
+                                            <span class="flex-grow-1 overflow-hidden">
+                                                <span class="d-block small fw-semibold">{{ $payload['title'] ?? 'Notifikasi' }}</span>
+                                                <span class="d-block extra-small text-body-secondary notif-msg">{{ $payload['message'] ?? '' }}</span>
+                                                <span class="d-block extra-small text-muted mt-1">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ $payload['url'] ?? route('notifications.index') }}"
+                                       class="dropdown-item d-flex gap-2 py-2 border-bottom notif-item">
+                                        <span class="notif-icon text-body-tertiary">
+                                            <i class="bi bi-{{ $payload['icon'] ?? 'bell' }}"></i>
+                                        </span>
+                                        <span class="flex-grow-1 overflow-hidden">
+                                            <span class="d-block small text-body-secondary">{{ $payload['title'] ?? 'Notifikasi' }}</span>
+                                            <span class="d-block extra-small text-body-tertiary notif-msg">{{ $payload['message'] ?? '' }}</span>
+                                            <span class="d-block extra-small text-muted mt-1">{{ $notification->created_at->diffForHumans() }}</span>
+                                        </span>
+                                    </a>
+                                @endif
+                            @empty
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-bell-slash fs-2 d-block mb-1"></i>
+                                    <span class="small">Belum ada notifikasi.</span>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <a href="{{ route('notifications.index') }}" class="dropdown-item text-center small py-2">
+                            Lihat semua notifikasi
+                        </a>
+                    </div>
+                </div>
+
                 <div class="dropdown">
                     <button class="btn border d-flex align-items-center gap-2 dropdown-toggle"
                             type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -216,6 +279,12 @@
                                 <i class="bi bi-clipboard-check me-1"></i>Antrian
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}"
+                               href="{{ route('reports.index') }}">
+                                <i class="bi bi-file-earmark-bar-graph me-1"></i>Laporan
+                            </a>
+                        </li>
                     @endif
                     @if (auth()->user()?->isAdmin())
                         <li class="nav-item">
@@ -230,13 +299,18 @@
                                 <i class="bi bi-basket me-1"></i>Kategori
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                               href="{{ route('users.index') }}">
+                                <i class="bi bi-people-gear me-1"></i>Pengguna
+                            </a>
+                        </li>
                     @endif
                 </ul>
             </div>
         </div>
     </nav>
 
-    {{-- ===================== Konten ===================== --}}
     <main class="container py-4 flex-grow-1">
         @include('partials.flash')
 
@@ -250,5 +324,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     @stack('scripts')
+    @include('partials.motion')
 </body>
 </html>

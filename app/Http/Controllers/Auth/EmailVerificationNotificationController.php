@@ -8,11 +8,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/**
- * Mengirim ulang tautan verifikasi email.
- * Route dilindungi middleware `throttle:6,1` untuk mencegah
- * penyalahgunaan pengiriman massal (mail bombing).
- */
 class EmailVerificationNotificationController extends Controller
 {
     public function __invoke(Request $request): RedirectResponse

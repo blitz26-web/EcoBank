@@ -15,28 +15,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use RuntimeException;
 
-/**
- * Alur kerja penarikan poin (Langkah 4).
- *
- *  - index   : riwayat penarikan (warga: miliknya; petugas/admin: semua)
- *              dengan filter status + pagination.
- *  - create  : form pengajuan penarikan (hanya warga) dengan preview
- *              konversi poin ke Rupiah dari config server.
- *  - store   : simpan via WithdrawalService — pola HOLD: poin di-debit
- *              saat pengajuan, saldo dicek di dalam transaksi + row lock
- *              (InsufficientPointsException otomatis render 422/redirect).
- *  - process : tandai penarikan sudah dibayar (petugas/admin).
- *  - reject  : tolak + refund poin otomatis dengan alasan wajib.
- */
 class WithdrawalController extends Controller
 {
     public function __construct(private readonly WithdrawalService $withdrawals)
     {
     }
 
-    /**
-     * Riwayat penarikan dengan filter status + pagination.
-     */
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -61,9 +45,6 @@ class WithdrawalController extends Controller
         ]);
     }
 
-    /**
-     * Form pengajuan penarikan poin — hanya warga.
-     */
     public function create(Request $request): View
     {
         Gate::authorize('create', Withdrawal::class);
@@ -82,11 +63,6 @@ class WithdrawalController extends Controller
         ]);
     }
 
-    /**
-     * Simpan pengajuan penarikan (pola HOLD). Kegagalan saldo dilempar
-     * sebagai InsufficientPointsException yang render() otomatis
-     * mengembalikan user ke form dengan pesan error yang jelas.
-     */
     public function store(StoreWithdrawalRequest $request): RedirectResponse
     {
         $this->withdrawals->requestWithdrawal(
@@ -101,9 +77,6 @@ class WithdrawalController extends Controller
             ->with('status', 'withdrawal-submitted');
     }
 
-    /**
-     * Tandai penarikan selesai dibayar (petugas/admin).
-     */
     public function process(Request $request, Withdrawal $withdrawal): RedirectResponse
     {
         Gate::authorize('process', $withdrawal);
@@ -117,9 +90,6 @@ class WithdrawalController extends Controller
         return back()->with('status', 'withdrawal-processed');
     }
 
-    /**
-     * Tolak penarikan + pengembalian poin (petugas/admin).
-     */
     public function reject(RejectWithdrawalRequest $request, Withdrawal $withdrawal): RedirectResponse
     {
         Gate::authorize('reject', $withdrawal);

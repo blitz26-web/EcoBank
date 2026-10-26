@@ -7,20 +7,8 @@ namespace App\Notifications;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 
-/**
- * Notifikasi verifikasi email berbahasa Indonesia.
- *
- * Mewarisi VerifyEmail bawaan framework agar URL bertanda tangan (signed)
- * dan aturan kedaluwarsa tetap dikelola framework; hanya pesan email
- * yang dilokalkan.
- */
 class VerifyEmailNotification extends VerifyEmail
 {
-    /**
-     * Bangun pesan email verifikasi.
-     *
-     * @param  mixed $notifiable
-     */
     public function toMail($notifiable): MailMessage
     {
         $verificationUrl = $this->verificationUrl($notifiable);

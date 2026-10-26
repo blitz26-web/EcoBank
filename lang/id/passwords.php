@@ -2,14 +2,6 @@
 
 declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Baris bahasa reset kata sandi (id)
-|--------------------------------------------------------------------------
-| Kunci-kunci ini dikembalikan Password::sendResetLink()/reset() dan
-| dirender lewat __(session('status')) / __($error) di views.
-*/
-
 return [
     'reset' => 'Kata sandi Anda telah diatur ulang.',
     'sent' => 'Kami telah mengirim tautan atur ulang kata sandi ke email Anda.',

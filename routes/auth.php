@@ -9,33 +9,17 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Routes Autentikasi (pola Breeze, Blade stack)
-|--------------------------------------------------------------------------
-| Route tamu (guest): login, daftar, lupa/reset kata sandi.
-| Route terautentikasi: logout.
-*/
-
-/* ------------------------------ Registrasi ------------------------------ */
-
 Route::middleware('guest')->group(function (): void {
     Route::get('/daftar', [RegisteredUserController::class, 'create'])
         ->name('register');
 
     Route::post('/daftar', [RegisteredUserController::class, 'store']);
 
-    /* ------------------------------- Login ------------------------------- */
-
     Route::get('/masuk', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
     Route::post('/masuk', [AuthenticatedSessionController::class, 'store']);
 
-    /* -------------------------- Reset kata sandi -------------------------
-     * POST dilindungi throttle (6 permintaan/menit per IP) untuk mencegah
-     * mail bombing pada endpoint publik pengirim email.
-     */
     Route::get('/lupa-kata-sandi', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -51,20 +35,10 @@ Route::middleware('guest')->group(function (): void {
         ->name('password.update');
 });
 
-/* Verifikasi email dinonaktifkan sesuai permintaan (panduan aktivasi ulang
- * ada di README bagian "Verifikasi Email - Status Nonaktif"). */
-
-/* ------------------------------- Logout --------------------------------- */
-
 Route::middleware('auth')->group(function (): void {
     Route::post('/keluar', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    /* ------------------- Multi-akun (satu sesi, banyak akun) -------------------
-     * Menambah akun WAJIB memasukkan kredensial akun tujuan (rate limit
-     * sama dengan login). Berpindah antar akun yang sudah terdaftar pada
-     * sesi ini tidak meminta ulang kata sandi — pola Google/Gmail.
-     */
     Route::get('/akun/tambah', [MultiAccountController::class, 'create'])
         ->name('accounts.create');
 

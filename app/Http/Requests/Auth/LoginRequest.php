@@ -11,20 +11,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Validasi & autentikasi permintaan login (pola Breeze).
- *
- * Dilengkapi rate limiting per kredensial (5 percobaan / menit) agar
- * tahan brute force. Pesan error menggunakan translation key bawaan
- * framework (`auth.failed`, `auth.throttle`).
- */
 class LoginRequest extends FormRequest
 {
-    /**
-     * Aturan validasi form login.
-     *
-     * @return array<string, list<string>>
-     */
     public function rules(): array
     {
         return [
@@ -33,11 +21,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Label atribut untuk pesan error berbahasa Indonesia.
-     *
-     * @return array<string, string>
-     */
     public function attributes(): array
     {
         return [
@@ -46,9 +29,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Jalankan autentikasi. Melempar ValidationException bila kredensial salah.
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -61,14 +41,19 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user !== null && array_key_exists('is_active', $user->getAttributes()) && ! $user->is_active) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun ini sedang dinonaktifkan. Silakan hubungi admin.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
-    /**
-     * Pastikan pengguna tidak melebihi batas percobaan login (anti brute force).
-     *
-     * @throws ValidationException
-     */
     public function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -87,9 +72,6 @@ class LoginRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Kunci rate limiter unik: gabungan email (lowercase) + IP pemesan.
-     */
     public function throttleKey(): string
     {
         return Str::transliterate(

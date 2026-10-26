@@ -9,33 +9,15 @@ use App\Models\Deposit;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Validasi form setoran sampah (dua mode):
- *
- *  1. Warga mengajukan setoran mandiri  -> tanpa user_id, status Pending.
- *  2. Petugas/admin mencatat di loket   -> user_id wajib (pemilik rekening),
- *     status Completed, poin langsung masuk.
- *
- * Pemisahan tanggung jawab validasi:
- *  - FormRequest (HTTP layer) : bentuk data (array items, kategori ada,
- *    berat > 0, user_id milik warga).
- *  - DepositService (bisnis)  : perhitungan poin ulang di server,
- *    transaksi + row lock, pencegahan status awal tidak sah.
- */
 class StoreDepositRequest extends FormRequest
 {
-    /** Batas jumlah baris item di form (selaras guard JS di view). */
     public const MAX_ITEMS = 10;
 
     public function authorize(): bool
     {
-        // DepositPolicy::create() — warga (mandiri) & petugas (loket); admin lolos via Gate::before.
         return $this->user()->can('create', Deposit::class);
     }
 
-    /**
-     * @return array<string, list<string>>
-     */
     public function rules(): array
     {
         $rules = [
@@ -44,11 +26,6 @@ class StoreDepositRequest extends FormRequest
             'items.*.weight_in_kg' => ['required', 'numeric', 'gt:0', 'max:10000'],
         ];
 
-        /*
-         * Warga TIDAK boleh mengirim user_id (selalu pemilik akunnya sendiri
-         * — anti manipulasi kredit ke akun lain). Petugas/admin WAJIB
-         * memilih warga sebagai pemilik rekening setoran.
-         */
         $rules['user_id'] = $this->user()->isWarga()
             ? ['prohibited']
             : ['required', 'integer', Rule::exists('users', 'id')->where('role', UserRole::Warga->value)];
@@ -56,9 +33,6 @@ class StoreDepositRequest extends FormRequest
         return $rules;
     }
 
-    /**
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [
@@ -82,10 +56,6 @@ class StoreDepositRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        /*
-         * Buang baris yang sama sekali kosong (pengguna menambah baris
-         * tetapi tidak mengisi), normalisasi desimal koma -> titik.
-         */
         $cleaned = [];
 
         foreach ((array) $this->input('items', []) as $item) {

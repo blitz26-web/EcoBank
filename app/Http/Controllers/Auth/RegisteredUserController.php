@@ -16,28 +16,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
-/**
- * Registrasi akun baru Kas Hijau.
- *
- * Keputusan keamanan: pendaftaran publik SELALU berperan `warga`.
- * Akun `petugas` dan `admin` hanya dapat dibuat oleh admin lewat
- * seeder / panel kelola user (Langkah 4) — tidak pernah dari input form.
- */
 class RegisteredUserController extends Controller
 {
-    /**
-     * Tampilkan halaman pendaftaran.
-     */
     public function create(): View
     {
         return view('auth.register');
     }
 
-    /**
-     * Simpan akun baru, login otomatis, lalu arahkan ke dashboard.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -59,7 +44,7 @@ class RegisteredUserController extends Controller
             'email' => $validated['email'],
             'phone' => trim($validated['phone']),
             'password' => Hash::make($validated['password']),
-            'role' => UserRole::Warga, // Registrasi publik selalu warga.
+            'role' => UserRole::Warga,
             'balance_points' => 0,
         ]);
 
@@ -67,7 +52,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Akun baru ikut tercatat pada daftar multi-akun sesi.
         MultiAccountSession::remember($request, (int) $user->id);
 
         return redirect()->route('dashboard');

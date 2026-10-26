@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DepositItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\DepositItemFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -28,17 +27,11 @@ class DepositItem extends Model
         ];
     }
 
-    /**
-     * Setoran induk dari item ini.
-     */
     public function deposit(): BelongsTo
     {
         return $this->belongsTo(Deposit::class);
     }
 
-    /**
-     * Kategori sampah untuk item ini.
-     */
     public function wasteCategory(): BelongsTo
     {
         return $this->belongsTo(WasteCategory::class);

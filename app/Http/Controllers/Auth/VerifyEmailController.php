@@ -9,13 +9,6 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 
-/**
- * Memproses tautan verifikasi email dari tombol di pesan email.
- *
- * EmailVerificationRequest (bawaan framework) memvalidasi tanda tangan
- * URL, ID, dan hash email sebelum method ini dijalankan - tautan
- * palsu/diubah otomatis ditolak 403.
- */
 class VerifyEmailController extends Controller
 {
     public function __invoke(EmailVerificationRequest $request): RedirectResponse

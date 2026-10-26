@@ -8,30 +8,13 @@ use App\Models\Withdrawal;
 use App\Services\WithdrawalService;
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * Validasi form pengajuan penarikan poin.
- *
- * Pemisahan tanggung jawab validasi:
- *  - FormRequest (HTTP layer) : bentuk data, daftar metode pembayaran,
- *    batas min/max dari config, nomor rekening wajib untuk non-tunai.
- *  - WithdrawalService (bisnis layer, di dalam DB::transaction):
- *    kecukupan saldo dengan row lock, konversi poin ke Rupiah,
- *    dan anti proses ganda.
- *
- * Pengecekan saldo sengaja TIDAK dilakukan di sini agar selalu dieksekusi
- * di dalam transaksi database bersama debit ledger — bebas race condition.
- */
 class StoreWithdrawalRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // WithdrawalPolicy::create() — hanya warga.
         return $this->user()->can('create', Withdrawal::class);
     }
 
-    /**
-     * @return array<string, list<string>>
-     */
     public function rules(): array
     {
         $methods = implode(',', app(WithdrawalService::class)->allowedPaymentMethods());
@@ -57,9 +40,6 @@ class StoreWithdrawalRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [

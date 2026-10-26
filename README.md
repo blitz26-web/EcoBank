@@ -9,7 +9,7 @@ verifikasi di loket, dan admin memantau seluruh sistem termasuk rekonsiliasi led
 |---|---|
 | Framework | Laravel 13 (PHP 8.3+, `declare(strict_types=1)` di semua file PHP) |
 | Antarmuka | Blade Templates + Bootstrap 5.3 + Bootstrap Icons (CDN) |
-| Database | MySQL (10 migrasi: 3 bawaan Laravel + 7 aplikasi, 6 tabel inti) |
+| Database | MySQL (13 migrasi: 3 bawaan Laravel + 10 aplikasi, 7 tabel inti) |
 | Gaya kode | PSR-12, type-safe (enum PHP 8.3), service layer + transaksi atomik |
 | Bahasa UI | Indonesia penuh (termasuk pesan validasi, email, dan halaman error) |
 | Status | Siap dipakai untuk demo/development; verifikasi email dinonaktifkan sesuai permintaan |
@@ -40,6 +40,13 @@ kapan pun.
 
 - **Dashboard pribadi** — kartu saldo, statistik setoran, dan mutasi poin terakhir dalam
   sekali pandang.
+- **Target tabungan poin** — tetapkan nama target (mis. *Tabungan Kompos Rumah*) beserta
+  jumlah poinnya dari halaman profil; progres target tampil sebagai progress bar di dalam
+  kartu saldo dashboard, lengkap dengan sisa poin yang dibutuhkan dan tanda *tercapai*.
+- **Level & lencana gamifikasi** — level warga naik otomatis mengikuti total poin seumur
+  hidup (Benih → Semai → Tunas → Rimbun → Lestari) dan enam lencana pencapaian (Langkah
+  Pertama, Kolektor, Ahli Daur Ulang, Penabung, Panen Pertama, Setia Sebulan) plus streak
+  mingguan; semuanya dihitung dari data riil tanpa tabel tambahan.
 - **Ajukan setoran mandiri** — form dinamis multi-kategori (tambah/hapus baris jenis sampah)
   dengan preview poin langsung saat mengetik berat; status *Menunggu Verifikasi* dan bisa
   dibatalkan selama masih pending.
@@ -48,6 +55,11 @@ kapan pun.
   poin ditahan (*hold*) sejak pengajuan.
 - **Riwayat lengkap** — setoran, penarikan, dan mutasi poin dengan filter status + pagination
   gaya Bootstrap.
+- **Grafik pribadi** — tren poin 30 hari terakhir (garis) dan komposisi kategori setoran
+  (doughnut) memakai Chart.js langsung di dashboard.
+- **Lonceng notifikasi in-app** — setiap setoran diverifikasi atau penarikan diproses/ditolak,
+  kabar muncul di lonceng navbar (dengan titik merah berdenyut saat ada yang belum dibaca)
+  dan di halaman `/notifikasi`; satu klik menandai dibaca sekaligus membuka halaman terkait.
 
 ### Untuk Petugas
 
@@ -58,6 +70,9 @@ kapan pun.
   `rejected_reason`) dan poin otomatis kembali ke warga (*refund*).
 - **Catat setoran loket** — pilih warga + multi-kategori; setoran langsung *Selesai* dan
   poin masuk seketika.
+- **Laporan setoran** (`/laporan`) — filter rentang tanggal & kategori, kartu ringkasan
+  (transaksi, berat, poin, nilai Rupiah), rekap mutasi poin periode, unduh CSV siap Excel,
+  dan cetak PDF lewat dialog peramban.
 
 ### Untuk Admin
 
@@ -67,6 +82,9 @@ kapan pun.
 - **CRUD kategori sampah** — tambah/ubah via modal, hapus hanya untuk kategori yang belum
   pernah dipakai (diblokir database + tombol otomatis dinonaktifkan).
 - **Bypass peran** — admin lolos semua policy (`Gate::before`) dan middleware `role`.
+- **Kelola pengguna** (`/pengguna`) — buat akun warga/petugas baru, ubah peran, dan
+  aktifkan/nonaktifkan akun dari tabel dengan pencarian & filter; akun nonaktif otomatis
+  diblokir saat login.
 
 ### Pengalaman Pengguna
 
@@ -79,6 +97,15 @@ kapan pun.
   (tidak perlu membuka menu hamburger); menu link navigasi diciutkan rapi di ponsel.
 - **Bahasa Indonesia menyeluruh** — validasi, `auth.failed`/`auth.throttle`, email reset kata
   sandi (termasuk template mail vendor), dan halaman error 403/404/419/500 kustom.
+- **Notifikasi email otomatis** — warga menerima email saat setorannya diverifikasi dan saat
+  pengajuan penarikan diproses atau ditolak; dikirim setelah transaksi database sukses, dan
+  kegagalan SMTP tidak menggagalkan operasi (tercatat di log). Kabar yang sama masuk ke
+  lonceng in-app (channel `database`).
+- **Animasi & micro-interaction** — kartu dan konten muncul berurutan (reveal on scroll),
+  tombol terangkat + bayangan saat hover, ikon bergoyang halus, angka statistik berhitung
+  naik, progress bar terisi animatif, dropdown pop-in, dan dot notifikasi berdenyut;
+  semuanya otomatis di semua halaman dan otomatis dimatikan bila pengguna memakai
+  `prefers-reduced-motion`.
 
 ---
 
@@ -176,16 +203,18 @@ Saldo tidak cukup melempar `InsufficientPointsException` yang otomatis dirender 
 ## Struktur Database
 
 Tujuh migrasi (`2026_10_10_000001` s.d. `000007`) membangun skema berikut di atas tabel
-bawaan Laravel (users, password_reset_tokens, sessions).
+bawaan Laravel (users, password_reset_tokens, sessions); migrasi lanjutan menambah kolom
+`is_active` (2026_10_19) serta `savings_goal_*` dan tabel `notifications` (2026_10_26).
 
 | Tabel | Isi | Kolom penting |
 |---|---|---|
-| `users` | Akun + saldo | `role` (enum warga/petugas/admin), `balance_points`, `phone`, `email_verified_at` |
+| `users` | Akun + saldo | `role` (enum warga/petugas/admin), `balance_points`, `phone`, `is_active`, `savings_goal_title`, `savings_goal_points` (target tabungan), `email_verified_at` |
 | `waste_categories` | Master kategori sampah | `name` (unik), `point_per_unit` (poin/kg), `description` |
 | `deposits` | Header setoran | `user_id`, `officer_id` (nullable), `code` (unik), `status` (pending/completed/cancelled) |
 | `deposit_items` | Rincian per jenis sampah | `deposit_id`, `waste_category_id`, `weight_in_kg` decimal(8,2), `points_earned` (snapshot historis) |
 | `withdrawals` | Penarikan poin | `user_id`, `officer_id`, `points_amount`, `cash_amount`, `payment_method`, `account_number`, `status` (requested/processed/rejected), `processed_at`, `rejected_reason` |
 | `point_ledgers` | Audit trail imutabel | `user_id`, `type` (credit/debit), `points`, `balance_after`, `description`, `reference_type`/`reference_id` (morph ke Deposit/Withdrawal/User) |
+| `notifications` | Notifikasi in-app (channel database Laravel) | `id` (uuid), `type`, `notifiable` (morph), `data` (payload JSON), `read_at` |
 
 Catatan desain: kolom `status` bertipe string + cast ke **PHP enum** (bukan SQL ENUM) agar
 type-safe di aplikasi tetapi mudah dimigrasi; `points_earned` disimpan sebagai snapshot
@@ -207,35 +236,39 @@ kas-hijau/
 │   │   │   ├── WithdrawalController.php  # ajukan/proses/tolak penarikan
 │   │   │   ├── QueueController.php       # antrian kerja petugas
 │   │   │   ├── PointLedgerController.php # riwayat mutasi poin
-│   │   │   ├── ProfileController.php     # profil + ganti kata sandi
+│   │   │   ├── NotificationController.php# lonceng + halaman /notifikasi + tandai dibaca
+│   │   │   ├── ProfileController.php     # profil + target tabungan + ganti kata sandi
 │   │   │   └── WasteCategoryController.php # CRUD kategori (admin)
 │   │   ├── Middleware/             # EnsureUserHasRole (proteksi `role:...`)
 │   │   └── Requests/               # LoginRequest, StoreDepositRequest,
 │   │                               # StoreWithdrawalRequest, RejectWithdrawalRequest,
 │   │                               # StoreWasteCategoryRequest
 │   ├── Models/                     # 6 model + relasi typed + casts() enum
-│   ├── Notifications/              # ResetPasswordNotification (Indonesia)
+│   ├── Notifications/              # DepositVerified + WithdrawalProcessed/Rejected + ResetPassword (Indonesia)
 │   ├── Policies/                   # Deposit, Withdrawal, WasteCategory
 │   ├── Providers/                  # AppServiceProvider (Gate::before + Password::defaults)
 │   └── Services/
 │       ├── PointLedgerService.php  # satu pintu mutasi saldo + ledger
 │       ├── DepositService.php      # transaksi penyetoran
 │       ├── WithdrawalService.php   # pola hold, proses, tolak + refund
+│       ├── GamificationService.php # level, lencana, streak mingguan (dihitung on-the-fly)
 │       └── MultiAccountSession.php # daftar akun per sesi (multi-login)
 ├── bootstrap/app.php               # alias middleware `role` + redirect guest/user
 ├── config/kas-hijau.php              # point_value & batas penarikan
 ├── database/
-│   ├── migrations/                 # 10 migrasi — 3 bawaan Laravel (0001_01_01_*: users,
-│   │                               #   password_reset_tokens, sessions, cache, jobs) + 7
-│   │                               #   aplikasi (kolom users + 5 tabel + evolusi withdrawals)
+│   ├── migrations/                 # 13 migrasi — 3 bawaan Laravel (0001_01_01_*: users,
+│   │                               #   password_reset_tokens, sessions, cache, jobs) + 10
+│   │                               #   aplikasi (kolom users + is_active + target tabungan,
+│   │                               #   5 tabel, evolusi withdrawals, tabel notifications)
 │   └── seeders/                    # Database, DemoUser, DummyUser, WasteCategory, DemoTransaction
 ├── lang/id/                        # auth, passwords, pagination, validation (Indonesia)
 ├── resources/views/
 │   ├── auth/                       # login, register, add-account, lupa/reset kata sandi
 │   ├── dashboard/                  # warga.blade / petugas.blade / admin.blade / admin-overview
 │   ├── deposits/ · withdrawals/ · points/ · waste-categories/ · officer/
-│   ├── layouts/                    # app (navbar), guest (kartu tengah), errors
-│   ├── partials/                   # flash, modal-reject, theme-head, theme-toggle
+│   ├── notifications/              # halaman /notifikasi (daftar + tandai dibaca)
+│   ├── layouts/                    # app (navbar + lonceng), guest (kartu tengah), errors
+│   ├── partials/                   # flash, modal-reject, theme-head, theme-toggle, motion
 │   ├── errors/                     # 403, 404, 419, 500
 │   ├── profile/ · vendor/notifications/ · welcome.blade.php
 └── routes/
@@ -255,7 +288,11 @@ kas-hijau/
 | `/keluar` | POST | auth | Keluar dari akun aktif (otomatis pindah ke akun tersisa bila ada) |
 | `/dashboard` | GET | auth | Konten otomatis sesuai peran |
 | `/profil` | GET/PATCH | auth | Edit data diri |
+| `/profil/target` | PATCH | auth | Simpan/hapus target tabungan poin |
 | `/profil/kata-sandi` | PUT | auth | Ganti kata sandi |
+| `/notifikasi` | GET | auth | Halaman daftar notifikasi (15/halaman) |
+| `/notifikasi/baca-semua` | POST | auth | Tandai semua notifikasi dibaca |
+| `/notifikasi/{id}/baca` | POST | auth | Tandai satu notifikasi dibaca lalu buka halaman terkait |
 | `/akun/tambah` | GET/POST | auth | Tambah akun lain ke sesi (POST memakai rate limiter login) |
 | `/akun/pindah` | POST | auth | Pindah ke akun terdaftar pada sesi ini |
 | `/akun/keluar-semua` | POST | auth | Keluar dari semua akun (sesi diakhiri) |
@@ -296,7 +333,8 @@ kas-hijau/
    Laravel modern).
 
    > `bootstrap/app.php` menimpa milik skeleton. Bila project Anda sudah mengeditnya,
-   > cukup salin 3 baris di dalam `withMiddleware()` (lihat komentar di file tersebut).
+   > cukup salin isi `withMiddleware()`: alias `role`, `redirectGuestsTo()` ke route
+   > `login`, dan `redirectUsersTo()` ke route `dashboard`.
    > Folder `database/migrations/` dari paket ini SUDAH memuat 3 migrasi bawaan
    > Laravel (`0001_01_01_*` pembuat tabel `users`, `password_reset_tokens`,
    > `sessions`, `cache`, `jobs`) sehingga aman menimpa seluruh folder `database/`
@@ -338,8 +376,16 @@ kas-hijau/
    php artisan serve
    ```
 
-6. *(Opsional, permission granular)* pasang Spatie lalu buka komentar trait `HasRoles`
+6. *(Opsional, permission granular)* pasang Spatie lalu tambahkan trait `HasRoles`
    pada `app/Models/User.php`:
+
+   ```php
+   use Spatie\Permission\Traits\HasRoles;
+
+   class User extends Authenticatable
+   {
+       use HasFactory, Notifiable, HasRoles;
+   ```
 
    ```bash
    composer require spatie/laravel-permission
@@ -598,17 +644,21 @@ seeder dijalankan agar dua mekanisme ini tidak saling bertentangan.
 | Revisi data | `kas-hijau-dummy-data.sql` — dump MySQL idempotent identik dengan seeder untuk import phpMyAdmin. |
 | Revisi UI | Dark mode `data-bs-theme` + Panel Admin `/admin` (rekonsiliasi, transaksi terbaru, top saldo, antrian). |
 | Revisi terakhir | Navbar: toggle tema + dropdown akun pindah ke bar atas (di luar menu collapse); dropdown akun mendukung multi-login (tambah/pindah/keluar semua). |
+| Fitur baru | Grafik Chart.js di dashboard (tren 30 hari, komposisi kategori, warga teraktif), laporan setoran CSV/PDF (`/laporan`), notifikasi email otomatis (verifikasi setoran, penarikan diproses/ditolak), dan panel kelola pengguna (`/pengguna`) dengan kolom `is_active`. |
+| Fitur baru II | Target tabungan poin (progres di dashboard), gamifikasi level & lencana (`GamificationService`), lonceng notifikasi in-app + halaman `/notifikasi` (channel database), dan animasi interaktif di semua halaman (reveal on scroll, hover lift tombol/kartu, count-up, progress bar animatif) via partial `motion`. |
 
 ## Rencana Pengembangan Berikutnya
 
-1. **Langkah 5 — Laporan Excel** via `maatwebsite/excel`: riwayat setoran, mutasi poin, dan
-   rekap kategori per periode, plus halaman rekonsiliasi ledger penuh untuk admin
-   (validasi invarian "saldo = rekap ledger", deteksi selisih, koreksi berupa entri ledger
-   baru).
-2. **Panel kelola user** — admin membuat/menonaktifkan akun petugas & warga dari UI
-   (saat ini hanya via seeder).
-3. **Notifikasi** — email pemberitahuan saat setoran diverifikasi atau penarikan
-   diproses/ditolak.
+1. **QR code setoran** — kode QR per pengajuan setoran yang dipindai petugas di loket
+   untuk mempercepat verifikasi.
+2. **Histori harga kategori** — nilai tukar poin per kategori dapat berubah per periode
+   dengan jejak historis yang tetap teraudit.
+3. **Ekspor laporan terjadwal** — kirim CSV/PDF rekap berkala (mingguan/bulanan) via email.
+4. **Permintaan penjemputan** — warga mengajukan penjemputan sampah dengan jadwal dan status.
+5. **REST API + aplikasi mobile** (Sanctum) atau integrasi notifikasi WhatsApp.
+
+Fitur yang sudah terealisasi dari rencana sebelumnya: target tabungan poin, gamifikasi
+(level & lencana), dan notifikasi in-app (lonceng database).
 
 ## Troubleshooting
 
@@ -618,6 +668,7 @@ seeder dijalankan agar dua mekanisme ini tidak saling bertentangan.
 | `SQLSTATE[42S02]` — 1146 Table 'users' doesn't exist saat `php artisan migrate` | Tabel `users` dibuat oleh migrasi BAWAAN Laravel (`0001_01_01_000000_create_users_table.php`), bukan oleh migrasi aplikasi. File bawaan itu hilang dari `database/migrations/` (biasanya karena folder `database/` skeleton tertimpa seluruhnya). Salin kembali 3 file `0001_01_01_*` dari skeleton Laravel baru (`composer create-project laravel/laravel tmp` lalu salin `tmp/database/migrations/0001_01_01_*.php`), atau pakai paket ini yang sudah menyertakannya — lalu `php artisan migrate:fresh --seed`. |
 | `SQLSTATE[42S21]` — 1060 Duplicate column name 'phone' saat `php artisan migrate` | Database Anda sudah memuat tabel `users` lama (kolom `phone` dsb. sudah ada), tetapi tabel `migrations` kosong/tidak sinkron sehingga Laravel mencoba menambah kolom yang sama lagi. Solusi terbersih untuk development/demo: `php artisan migrate:fresh --seed` — menghapus SEMUA tabel lalu migrasi + seeder dari nol (data demo terisi otomatis). Alternatif: hapus semua tabel di phpMyAdmin terlebih dulu, baru jalankan `php artisan migrate`. Jika tabel & data Anda sudah lengkap dan benar, migrasi tidak perlu dijalankan ulang sama sekali — cukup lanjut memakai aplikasi. |
 | Login gagal padahal email benar | Pastikan memakai password demo `password` untuk akun seeded. Akun hasil registrasi manual memakai password Anda sendiri. Terkena rate limit? Tunggu 1 menit (5 percobaan/menit). |
+| Pesan "Akun ini sedang dinonaktifkan" saat login akun dummy | Struktur database tidak termutakhir: kolom `is_active` (migrasi 2026_10_19) belum ada di tabel `users`, biasanya karena kode diperbarui tanpa menjalankan migrasi, dan import SQL berhenti di `TRUNCATE notifications`. Jalankan `php artisan migrate` terlebih dulu, lalu import ulang `kas-hijau-dummy-data.sql` (versi terbaru sudah mengisi `is_active` = 1 untuk semua akun). Solusi cepat tanpa import ulang: `UPDATE users SET is_active = 1;` di phpMyAdmin. Versi aplikasi terbaru hanya memblokir login bila akun memang dinonaktifkan lewat menu Pengguna. |
 | Email reset tidak terkirim | `MAIL_MAILER=log` menulis email ke `storage/logs/laravel.log`, bukan mengirim sungguhan. Ini perilaku normal untuk development. |
 | Warga membuka `/admin` mendapat 403 | Memang disengaja — halaman error 403 kustom menampilkan daftar peran yang diizinkan. Login sebagai admin atau petugas sesuai halaman tujuan. |
 | Saldo tampak tidak cocok dengan mutasi | Cek Panel Admin (`/admin`) → kartu Rekonsiliasi Ledger. Bila pakai import SQL, pastikan import file terbaru (sudah memuat 19 entri ledger kronologis) dan jangan edit `balance_points` manual — selalu lewat service/ledger. |

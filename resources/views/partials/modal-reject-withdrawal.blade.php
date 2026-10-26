@@ -1,11 +1,3 @@
-{{-- Modal + skrip penolakan penarikan poin. Dipakai oleh:
-     - resources/views/officer/queue.blade.php
-     - resources/views/withdrawals/index.blade.php
-   Pemakaian tombol pemicu:
-     <button data-bs-toggle="modal" data-bs-target="#modal-tolak-penarikan"
-             data-action="{{ route('withdrawals.reject', $withdrawal) }}"
-             data-code="{{ $withdrawal->withdrawal_code }}"
-             data-info="...">Tolak</button> --}}
 <div class="modal fade" id="modal-tolak-penarikan" tabindex="-1" aria-labelledby="modal-tolak-label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" id="form-tolak-penarikan" action="#" class="modal-content">

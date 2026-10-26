@@ -13,27 +13,15 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
-/**
- * Pengelolaan profil akun: data diri dan penggantian kata sandi.
- */
 class ProfileController extends Controller
 {
-    /**
-     * Tampilkan halaman profil.
-     */
     public function edit(Request $request): View
     {
         return view('profile.edit', ['user' => $request->user()]);
     }
 
-    /**
-     * Perbarui data profil (nama, email, telepon).
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function update(Request $request): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
 
         $validated = $request->validate([
@@ -55,14 +43,8 @@ class ProfileController extends Controller
         return back()->with('status', 'profil-updated');
     }
 
-    /**
-     * Ganti kata sandi (wajib memasukkan kata sandi lama).
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function updatePassword(Request $request): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
 
         $validated = $request->validate([
@@ -82,5 +64,35 @@ class ProfileController extends Controller
         ])->save();
 
         return back()->with('status', 'password-updated');
+    }
+
+    public function updateGoal(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'savings_goal_title' => ['nullable', 'string', 'max:100'],
+            'savings_goal_points' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+        ], [
+            'savings_goal_title.max' => 'Nama target maksimal 100 karakter.',
+            'savings_goal_points.integer' => 'Target poin harus berupa angka.',
+            'savings_goal_points.min' => 'Target poin minimal 1.',
+            'savings_goal_points.max' => 'Target poin maksimal 1.000.000.',
+        ], [
+            'savings_goal_title' => 'nama target',
+            'savings_goal_points' => 'target poin',
+        ]);
+
+        $hasPoints = isset($validated['savings_goal_points']) && $validated['savings_goal_points'] > 0;
+        $title = trim((string) ($validated['savings_goal_title'] ?? ''));
+
+        if ($hasPoints && $title === '') {
+            return back()->withErrors(['savings_goal_title' => 'Isi nama target terlebih dahulu.'])->withInput();
+        }
+
+        $request->user()->forceFill([
+            'savings_goal_title' => $hasPoints ? $title : null,
+            'savings_goal_points' => $hasPoints ? (int) $validated['savings_goal_points'] : null,
+        ])->save();
+
+        return back()->with('status', 'goal-updated');
     }
 }

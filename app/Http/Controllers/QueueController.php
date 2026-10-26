@@ -11,17 +11,6 @@ use App\Models\Withdrawal;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
-/**
- * Antrian kerja petugas (Langkah 4).
- *
- * Satu halaman dengan dua daftar berpaginasi:
- *  1. Setoran Pending  -> tombol verifikasi (kredit poin).
- *  2. Penarikan Requested -> tombol proses (selesaikan) / tolak (refund).
- *
- * Route dilindungi middleware `role:petugas,admin`. Dua paginator pada
- * satu halaman memakai pageName berbeda (setoran_page, penarikan_page)
- * agar membuka halaman daftar A tidak mereset posisi halaman daftar B.
- */
 class QueueController extends Controller
 {
     public function __invoke(Request $request): View

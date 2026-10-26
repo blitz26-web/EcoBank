@@ -6,32 +6,19 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Header transaksi penyetoran sampah.
- *
- * Alur status: pending -> completed | cancelled.
- * Poin dikreditkan ke saldo warga HANYA saat status menjadi completed.
- */
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::create('deposits', function (Blueprint $table): void {
             $table->id();
-            $table->string('deposit_code', 30)->unique()
-                ->comment('Kode unik setoran, mis. DEP-20261010-7F3K9Q.');
+            $table->string('deposit_code', 30)->unique();
 
-            // Catatan keuangan tidak boleh ikut terhapus secara diam-diam:
-            // pakai restrict agar data historis selalu utuh.
-            $table->foreignId('user_id')->constrained()->restrictOnDelete()
-                ->comment('Warga pemilik setoran.');
-            $table->foreignId('officer_id')->nullable()->constrained('users')->nullOnDelete()
-                ->comment('Petugas pemverifikasi; null selama masih pending.');
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->foreignId('officer_id')->nullable()->constrained('users')->nullOnDelete();
 
-            $table->unsignedBigInteger('total_points')->default(0)
-                ->comment('Total poin = penjumlahan points_earned pada deposit_items.');
-            $table->string('status', 20)->default('pending')
-                ->comment('pending | completed | cancelled (App\Enums\DepositStatus).');
+            $table->unsignedBigInteger('total_points')->default(0);
+            $table->string('status', 20)->default('pending');
 
             $table->timestamps();
 

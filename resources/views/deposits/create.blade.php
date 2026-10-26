@@ -38,7 +38,6 @@
 
         <div class="card app-card mb-4">
             <div class="card-body p-4">
-                {{-- Pemilik rekening (khusus petugas/admin) --}}
                 @if ($isCounterMode)
                     <div class="mb-4">
                         <label for="user-id" class="form-label fw-semibold">
@@ -58,14 +57,12 @@
                     </div>
                 @endif
 
-                {{-- Baris item dinamis --}}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h2 class="h6 fw-bold mb-0"><i class="bi bi-basket3 me-1 text-success"></i>Jenis Sampah</h2>
                     <span class="text-muted small">Maksimal {{ $maxItems }} jenis per setoran</span>
                 </div>
 
                 <div id="item-rows">
-                    {{-- Baris diisi oleh JavaScript dari template di bawah --}}
                 </div>
 
                 <button type="button" id="btn-add-item" class="btn btn-outline-success btn-sm">
@@ -73,7 +70,6 @@
                 </button>
             </div>
 
-            {{-- Ringkasan total --}}
             <div class="card-footer bg-light border-0 rounded-bottom-4 p-4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
@@ -97,7 +93,6 @@
         </div>
     </form>
 
-    {{-- ==================== Template Baris Item ==================== --}}
     <template id="item-row-template">
         <div class="row g-2 align-items-end item-row border-bottom pb-3 mb-3">
             <div class="col-12 col-md-5">
@@ -203,7 +198,6 @@
                 addRow(null);
             });
 
-            // Pulihkan isian lama setelah error validasi; bila kosong, sediakan satu baris.
             if (oldItems.length > 0) {
                 oldItems.forEach(function (item) {
                     addRow(item);

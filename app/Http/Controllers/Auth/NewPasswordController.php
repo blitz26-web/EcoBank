@@ -15,14 +15,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
-/**
- * Menyetel ulang kata sandi memakai token dari email reset.
- */
 class NewPasswordController extends Controller
 {
-    /**
-     * Tampilkan form reset kata sandi (dari tautan email).
-     */
     public function create(Request $request): View
     {
         return view('auth.reset-password', [
@@ -31,11 +25,6 @@ class NewPasswordController extends Controller
         ]);
     }
 
-    /**
-     * Simpan kata sandi baru bila token valid.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -48,7 +37,6 @@ class NewPasswordController extends Controller
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
-        // Password::reset memvalidasi token, lalu menjalankan callback di bawah.
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password): void {

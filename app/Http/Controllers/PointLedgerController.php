@@ -8,20 +8,8 @@ use App\Enums\LedgerType;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
-/**
- * Riwayat mutasi poin (audit trail) milik user yang sedang login.
- *
- * Ledger bersifat imutabel: halaman ini HANYA membaca. Saldo terkini
- * selalu konsisten dengan rekap entri ledger (invarian Kas Hijau), dan
- * filter arah mutasi (masuk/keluar) memudahkan warga menelusuri
- * sumber poin maupun pengeluarannya.
- */
 class PointLedgerController extends Controller
 {
-    /**
-     * Riwayat mutasi poin milik user yang login (semua peran) dengan
-     * filter arah mutasi + pagination.
-     */
     public function index(Request $request): View
     {
         $type = LedgerType::tryFrom((string) $request->query('type', ''));

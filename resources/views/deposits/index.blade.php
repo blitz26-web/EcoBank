@@ -14,7 +14,6 @@
         </a>
     </div>
 
-    {{-- ==================== Filter Status ==================== --}}
     <div class="btn-group btn-group-sm mb-3 flex-wrap" role="group" aria-label="Filter status setoran">
         <a href="{{ route('deposits.index') }}" class="btn {{ $statusFilter === null ? 'btn-success' : 'btn-outline-success' }}">
             Semua
@@ -105,7 +104,6 @@
                                         </div>
                                     </td>
                                 </tr>
-                                {{-- Baris detail yang bisa dilipat --}}
                                 <tr class="border-0">
                                     <td colspan="{{ $isWarga ? 7 : 8 }}" class="p-0 border-0">
                                         <div class="collapse" id="detail-setoran-{{ $deposit->getKey() }}">

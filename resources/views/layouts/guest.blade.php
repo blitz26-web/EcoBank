@@ -7,16 +7,13 @@
 
     <title>@yield('title', 'Kas Hijau') | Kas Hijau</title>
 
-    {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
 
-    {{-- Bootstrap 5.3 + Bootstrap Icons via CDN --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-        /* Latar gradient: hijau lembut (terang) / hijau gelap (gelap). */
         [data-bs-theme="light"] body {
             background: linear-gradient(135deg, #e8f5ee 0%, #f4fbf7 55%, #eaf6ef 100%);
         }
@@ -48,7 +45,6 @@
             color: #fff;
             font-size: 1.5rem;
         }
-        /* Ikon tombol tema: bulan saat terang, matahari saat gelap. */
         [data-bs-theme="light"] .theme-icon-sun { display: none; }
         [data-bs-theme="dark"] .theme-icon-moon { display: none; }
         .theme-toggle-floating {
@@ -62,7 +58,6 @@
 <body>
     <main class="container d-flex flex-column justify-content-center align-items-center py-5 flex-grow-1">
         <div class="w-100" style="max-width: 460px;">
-            {{-- Logo brand --}}
             <div class="text-center mb-4">
                 <span class="brand-icon mb-2"><i class="bi bi-recycle"></i></span>
                 <h1 class="h3 fw-bold text-success mb-0">Kas Hijau</h1>
@@ -75,7 +70,6 @@
         </div>
     </main>
 
-    {{-- Pengalih tema untuk halaman auth (tanpa navbar) --}}
     @include('partials.theme-toggle', ['floating' => true])
 
     <footer class="text-center text-muted small pb-4">
@@ -84,5 +78,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    @include('partials.motion')
 </body>
 </html>

@@ -6,7 +6,6 @@
 
     <title>@yield('title', 'Terjadi Kesalahan') | Kas Hijau</title>
 
-    {{-- Set tema (terang/gelap) SEBELUM CSS dimuat agar tidak berkedip --}}
     @include('partials.theme-head')
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -46,7 +45,6 @@
         [data-bs-theme="dark"] .error-code {
             color: #75dfb4;
         }
-        /* Ikon tombol tema: bulan saat terang, matahari saat gelap. */
         [data-bs-theme="light"] .theme-icon-sun { display: none; }
         [data-bs-theme="dark"] .theme-icon-moon { display: none; }
         .theme-toggle-floating {
@@ -63,11 +61,12 @@
         @yield('content')
     </main>
 
-    {{-- Pengalih tema (tanpa navbar) --}}
     @include('partials.theme-toggle', ['floating' => true])
 
     <footer class="text-center text-muted small pb-4">
         &copy; {{ date('Y') }} Kas Hijau &mdash; Bank sampah digital.
     </footer>
+
+    @include('partials.motion')
 </body>
 </html>

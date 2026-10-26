@@ -8,40 +8,20 @@ use App\Enums\WithdrawalStatus;
 use App\Exceptions\InsufficientPointsException;
 use App\Models\User;
 use App\Models\Withdrawal;
+use App\Notifications\WithdrawalProcessedNotification;
+use App\Notifications\WithdrawalRejectedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
-/**
- * Service yang menangani seluruh alur bisnis penarikan poin Kas Hijau.
- *
- * Pola HOLD: poin dipotong dari saldo saat pengajuan dibuat (requested)
- * agar saldo tidak bisa dipakai ganda oleh beberapa pengajuan yang
- * berjalan bersamaan. Bila penarikan ditolak, poin dikembalikan
- * otomatis lewat entri kredit di ledger.
- *
- * Semua operasi atomik (DB::transaction) dan setiap mutasi saldo
- * dicatat ke point_ledgers melalui PointLedgerService.
- */
 class WithdrawalService
 {
     public function __construct(private readonly PointLedgerService $ledger)
     {
     }
 
-    /**
-     * Ajukan penarikan poin menjadi uang tunai.
-     *
-     * @param  User $holder  Warga pemilik saldo poin.
-     * @param  int $pointsAmount  Jumlah poin yang ditarik (harus <= saldo).
-     * @param  string $paymentMethod  Salah satu konstanta PAYMENT_* model Withdrawal.
-     * @param  string|null $accountNumber  No. rekening/e-wallet; wajib untuk non-tunai.
-     *
-     * @throws InsufficientPointsException Bila saldo poin tidak mencukupi.
-     * @throws InvalidArgumentException Bila jumlah di luar batas konfigurasi,
-     *                                  metode tidak valid, atau nomor rekening kosong.
-     */
     public function requestWithdrawal(
         User $holder,
         int $pointsAmount,
@@ -52,7 +32,6 @@ class WithdrawalService
             throw new InvalidArgumentException('Metode pembayaran tidak valid.');
         }
 
-        // Normalisasi: penarikan tunai tidak menyimpan nomor rekening.
         if ($paymentMethod === Withdrawal::PAYMENT_CASH) {
             $accountNumber = null;
         } elseif ($accountNumber === null || trim($accountNumber) === '') {
@@ -62,8 +41,6 @@ class WithdrawalService
         $this->assertAmountWithinLimits($pointsAmount);
 
         return DB::transaction(function () use ($holder, $pointsAmount, $paymentMethod, $accountNumber): Withdrawal {
-            // Kunci baris user: cek saldo dan debit harus atomik terhadap
-            // setoran / penarikan lain yang berjalan bersamaan.
             $holder = User::query()
                 ->whereKey((int) $holder->getKey())
                 ->lockForUpdate()
@@ -79,8 +56,6 @@ class WithdrawalService
                 'status' => WithdrawalStatus::Requested,
             ]);
 
-            // Debit saldo + catat ledger. Melempar InsufficientPointsException
-            // bila saldo tidak cukup; seluruh transaksi otomatis di-rollback.
             $this->ledger->debit(
                 $holder,
                 $pointsAmount,
@@ -92,15 +67,9 @@ class WithdrawalService
         });
     }
 
-    /**
-     * Tandai penarikan sudah dibayar (tunai/transfer tersalurkan).
-     * Tidak mengubah saldo: poin sudah dipotong saat pengajuan.
-     *
-     * @throws RuntimeException Bila penarikan tidak berstatus requested.
-     */
     public function processWithdrawal(Withdrawal $withdrawal, User $officer): Withdrawal
     {
-        return DB::transaction(function () use ($withdrawal, $officer): Withdrawal {
+        $withdrawal = DB::transaction(function () use ($withdrawal, $officer): Withdrawal {
             $withdrawal = $this->lockWithdrawal((int) $withdrawal->getKey());
 
             if (! $withdrawal->isRequested()) {
@@ -117,24 +86,25 @@ class WithdrawalService
                 'processed_at' => now(),
             ]);
 
-            return $withdrawal->fresh();
+            return $withdrawal->fresh(['user']);
         });
+
+        try {
+            $withdrawal->user->notify(new WithdrawalProcessedNotification($withdrawal));
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        return $withdrawal;
     }
 
-    /**
-     * Tolak penarikan: tandai rejected DAN kembalikan poin yang di-hold
-     * ke saldo warga beserta entri kredit di ledger (audit trail utuh).
-     *
-     * @throws InvalidArgumentException Bila alasan penolakan kosong.
-     * @throws RuntimeException Bila penarikan tidak berstatus requested.
-     */
     public function rejectWithdrawal(Withdrawal $withdrawal, User $officer, string $reason): Withdrawal
     {
         if (trim($reason) === '') {
             throw new InvalidArgumentException('Alasan penolakan wajib diisi untuk kebutuhan audit.');
         }
 
-        return DB::transaction(function () use ($withdrawal, $officer, $reason): Withdrawal {
+        $withdrawal = DB::transaction(function () use ($withdrawal, $officer, $reason): Withdrawal {
             $withdrawal = $this->lockWithdrawal((int) $withdrawal->getKey());
 
             if (! $withdrawal->isRequested()) {
@@ -145,7 +115,6 @@ class WithdrawalService
                 ));
             }
 
-            // Kunci baris warga sebelum pengembalian poin.
             $holder = User::query()
                 ->whereKey((int) $withdrawal->user_id)
                 ->lockForUpdate()
@@ -157,7 +126,6 @@ class WithdrawalService
                 'rejected_reason' => trim($reason),
             ]);
 
-            // Kembalikan poin yang tertahan (hold) sejak pengajuan.
             $this->ledger->credit(
                 $holder,
                 $withdrawal->points_amount,
@@ -165,16 +133,18 @@ class WithdrawalService
                 sprintf('Pengembalian poin: penarikan %s ditolak. Alasan: %s', $withdrawal->withdrawal_code, trim($reason)),
             );
 
-            return $withdrawal->fresh();
+            return $withdrawal->fresh(['user']);
         });
+
+        try {
+            $withdrawal->user->notify(new WithdrawalRejectedNotification($withdrawal));
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        return $withdrawal;
     }
 
-    /**
-     * Daftar metode pembayaran yang valid — dipakai ulang oleh
-     * StoreWithdrawalRequest untuk rule `in:` pada validasi form.
-     *
-     * @return list<string>
-     */
     public function allowedPaymentMethods(): array
     {
         return [
@@ -184,13 +154,6 @@ class WithdrawalService
         ];
     }
 
-    /* ------------------------------------------------------------------ */
-    /* Private helpers                                                     */
-    /* ------------------------------------------------------------------ */
-
-    /**
-     * Validasi jumlah poin terhadap batas konfigurasi aplikasi.
-     */
     private function assertAmountWithinLimits(int $pointsAmount): void
     {
         if ($pointsAmount <= 0) {
@@ -215,10 +178,6 @@ class WithdrawalService
         }
     }
 
-    /**
-     * Konversi poin ke Rupiah memakai nilai tukar dari konfigurasi server.
-     * Rate TIDAK pernah diterima dari klien agar tidak bisa dimanipulasi.
-     */
     private function convertPointsToRupiah(int $pointsAmount): float
     {
         $pointValue = (int) config('kas-hijau.point_value', 0);
@@ -230,10 +189,6 @@ class WithdrawalService
         return round($pointsAmount * $pointValue, 2);
     }
 
-    /**
-     * Ambil ulang penarikan dengan row lock (SELECT ... FOR UPDATE).
-     * WAJIB dipanggil dari dalam DB::transaction().
-     */
     private function lockWithdrawal(int $withdrawalId): Withdrawal
     {
         return Withdrawal::query()
@@ -242,11 +197,6 @@ class WithdrawalService
             ->firstOrFail();
     }
 
-    /**
-     * Bangun kode penarikan unik, contoh: WDR-20261010-AB12CD.
-     * Unique index pada kolom withdrawal_code menjadi pengaman terakhir
-     * terhadap tabrakan kode akibat request yang bersamaan.
-     */
     private function generateWithdrawalCode(): string
     {
         do {

@@ -15,29 +15,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
 
-/**
- * Alur kerja setoran sampah (Langkah 4).
- *
- *  - index   : riwayat setoran. Warga hanya melihat miliknya (scoping
- *              wajib di query, bukan hanya di Blade); petugas/admin
- *              melihat semua beserta filter status.
- *  - create  : form dinamis multi-kategori. Mode berbeda per peran:
- *              warga -> pengajuan mandiri (Pending), petugas/admin ->
- *              pencatatan di loket (Completed, poin langsung masuk).
- *  - store   : simpan via DepositService (DB::transaction + row lock +
- *              poin dihitung ulang di server).
- *  - verify  : verifikasi setoran pending (petugas/admin).
- *  - cancel  : batalkan setoran pending milik sendiri (warga).
- */
 class DepositController extends Controller
 {
     public function __construct(private readonly DepositService $deposits)
     {
     }
 
-    /**
-     * Riwayat setoran dengan filter status + pagination.
-     */
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -61,9 +44,6 @@ class DepositController extends Controller
         ]);
     }
 
-    /**
-     * Form setoran: mandiri (warga) atau pencatatan loket (petugas/admin).
-     */
     public function create(Request $request): View
     {
         $user = $request->user();
@@ -83,9 +63,6 @@ class DepositController extends Controller
         ]);
     }
 
-    /**
-     * Simpan setoran lewat DepositService; status awal ditentukan peran.
-     */
     public function store(StoreDepositRequest $request): RedirectResponse
     {
         $user = $request->user();
@@ -115,9 +92,6 @@ class DepositController extends Controller
             ->with('status', 'deposit-recorded');
     }
 
-    /**
-     * Verifikasi setoran pending: poin dikreditkan ke saldo warga.
-     */
     public function verify(Request $request, Deposit $deposit): RedirectResponse
     {
         $this->authorize('verify', $deposit);
@@ -131,9 +105,6 @@ class DepositController extends Controller
         return back()->with('status', 'deposit-verified');
     }
 
-    /**
-     * Batalkan setoran pending (oleh warga pemiliknya).
-     */
     public function cancel(Request $request, Deposit $deposit): RedirectResponse
     {
         $this->authorize('cancel', $deposit);

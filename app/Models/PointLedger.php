@@ -31,18 +31,11 @@ class PointLedger extends Model
         ];
     }
 
-    /**
-     * User pemilik mutasi poin ini.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Model pemicu mutasi ini (Deposit, Withdrawal, dan lain-lain)
-     * melalui relasi polimorfik.
-     */
     public function reference(): MorphTo
     {
         return $this->morphTo();
@@ -50,13 +43,6 @@ class PointLedger extends Model
 
     protected static function booted(): void
     {
-        /*
-         * Imutabilitas ledger (audit trail):
-         * entri ledger TIDAK BOLEH diubah maupun dihapus setelah dibuat.
-         * Koreksi saldo selalu dilakukan dengan membuat ENTRI BARU
-         * (misalnya entri debit koreksi), sehingga riwayat audit
-         * tetap utuh dan dapat direkonsiliasi kapan pun.
-         */
         static::updating(function (PointLedger $ledger): void {
             throw new LogicException('Entri point ledger bersifat imutabel dan tidak dapat diubah.');
         });

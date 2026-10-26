@@ -25,7 +25,6 @@
     @endif
 
     <div class="row g-4">
-        {{-- ==================== Kartu Saldo ==================== --}}
         <div class="col-12 col-lg-4">
             <div class="card app-card text-white bg-success mb-4 mb-lg-0">
                 <div class="card-body p-4">
@@ -48,14 +47,12 @@
             </div>
         </div>
 
-        {{-- ==================== Form Pengajuan ==================== --}}
         <div class="col-12 col-lg-8">
             <form method="POST" action="{{ route('withdrawals.store') }}" id="form-penarikan">
                 @csrf
 
                 <div class="card app-card mb-4">
                     <div class="card-body p-4">
-                        {{-- Jumlah poin --}}
                         <div class="mb-3">
                             <label for="points-amount" class="form-label fw-semibold">
                                 Jumlah Poin yang Ditarik <span class="text-danger">*</span>
@@ -77,7 +74,6 @@
                             </div>
                         </div>
 
-                        {{-- Preview konversi --}}
                         <div class="bg-light rounded-3 p-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div class="text-muted small">Konversi (rate tetap dari server)</div>
                             <div class="fs-4 fw-bold text-success">
@@ -85,7 +81,6 @@
                             </div>
                         </div>
 
-                        {{-- Metode pembayaran --}}
                         <label class="form-label fw-semibold d-block">Metode Pembayaran <span class="text-danger">*</span></label>
                         <div class="row g-2 mb-3">
                             @foreach ($paymentLabels as $methodValue => $methodLabel)
@@ -108,7 +103,6 @@
                             <div class="text-danger small mb-3">{{ $message }}</div>
                         @enderror
 
-                        {{-- Nomor rekening / e-wallet --}}
                         <div class="mb-1" id="wrap-account-number">
                             <label for="account-number" class="form-label fw-semibold">
                                 <span id="label-account-number">Nomor Rekening / E-Wallet</span> <span class="text-danger">*</span>

@@ -89,7 +89,6 @@
         @endif
     </div>
 
-    {{-- ==================== Modal Tambah / Ubah Kategori ==================== --}}
     <div class="modal fade" id="modal-kategori" tabindex="-1" aria-labelledby="modal-kategori-label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" id="form-kategori" action="{{ route('categories.store') }}" class="modal-content">
@@ -144,7 +143,6 @@
             var titleEl = document.getElementById('kategori-modal-title');
             var storeUrl = form.action;
 
-            // Tombol "Tambah": reset ke mode create.
             document.getElementById('btn-tambah-kategori').addEventListener('click', function () {
                 form.action = storeUrl;
                 methodInput.value = 'POST';
@@ -152,7 +150,6 @@
                 form.reset();
             });
 
-            // Tombol "Ubah" per baris: isi modal dengan data kategori terkait.
             document.querySelectorAll('.js-edit-kategori').forEach(function (button) {
                 button.addEventListener('click', function () {
                     form.action = button.getAttribute('data-url') || storeUrl;

@@ -1,14 +1,3 @@
-{{--
-Partials: Tombol pengalih tema terang/gelap + JavaScript-nya.
-
-Pemakaian:
-  @include('partials.theme-toggle')                          -- di navbar (bentuk pill)
-  @include('partials.theme-toggle', ['floating' => true])    -- tombol melayang (layout tanpa navbar)
-
-Ikon ditentukan murni lewat CSS (lihat .theme-icon-* pada layout):
-mode terang menampilkan bulan (ajakan ke gelap), mode gelap menampilkan matahari.
-Tersimpan di localStorage (kunci: kashijau-theme) agar konsisten antar halaman.
---}}
 <button type="button" id="themeToggle" aria-label="Ganti tema terang/gelap"
         title="Ganti tema terang/gelap"
         @if (! empty($floating))
@@ -35,7 +24,6 @@ Tersimpan di localStorage (kunci: kashijau-theme) agar konsisten antar halaman.
             try {
                 window.localStorage.setItem('kashijau-theme', next);
             } catch (e) {
-                /* Abaikan bila penyimpanan tidak tersedia; tema tetap berganti untuk sesi ini. */
             }
         });
     })();

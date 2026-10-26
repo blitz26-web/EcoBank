@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Deposit extends Model
 {
-    /** @use HasFactory<\Database\Factories\DepositFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -31,34 +30,20 @@ class Deposit extends Model
         ];
     }
 
-    /**
-     * Warga pemilik setoran ini.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Petugas yang memverifikasi / mencatat setoran ini.
-     * Bernilai null selama setoran masih menunggu verifikasi.
-     */
     public function officer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'officer_id');
     }
 
-    /**
-     * Rincian jenis sampah yang disetorkan.
-     */
     public function items(): HasMany
     {
         return $this->hasMany(DepositItem::class);
     }
-
-    /* ------------------------------------------------------------------ */
-    /* Helper status                                                       */
-    /* ------------------------------------------------------------------ */
 
     public function isPending(): bool
     {

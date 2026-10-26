@@ -4,18 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Migrasi bawaan Laravel (disertakan agar paket siap pakai):
- * membuat tabel users, password_reset_tokens, dan sessions.
- *
- * Catatan Kas Hijau: kolom phone, role, dan balance_points DITAMBAHKAN
- * TERPISAH oleh migrasi 2026_10_10_000001_add_kas_hijau_columns_to_users_table.
- */
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -44,9 +34,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

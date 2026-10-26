@@ -12,20 +12,6 @@ use App\Services\DepositService;
 use App\Services\WithdrawalService;
 use Illuminate\Database\Seeder;
 
-/**
- * Data transaksi demo Kas Hijau (Langkah 4).
- *
- * PENTING: seeder ini TIDAK PERNAH menulis saldo/ledger secara manual.
- * Semua transaksi dibuat melalui DepositService & WithdrawalService agar
- * invarian "saldo = rekap point_ledgers" tetap terjaga persis seperti
- * alur produksi (transaksi + row lock + entri ledger otomatis).
- *
- * Hasil akhir untuk demo UI:
- *  - 2 setoran selesai (loket), 3 setoran pending  -> antrian verifikasi terisi.
- *  - 1 penarikan diproses, 1 ditolak (refund), 1 diajukan -> antrian penarikan terisi.
- *
- * Idempotent: dilewati bila sudah ada data setoran.
- */
 class DemoTransactionSeeder extends Seeder
 {
     public function run(): void
@@ -54,33 +40,19 @@ class DemoTransactionSeeder extends Seeder
             return;
         }
 
-        /** @var DepositService $deposits */
         $deposits = app(DepositService::class);
-        /** @var WithdrawalService $withdrawals */
         $withdrawals = app(WithdrawalService::class);
 
-        /*
-         * 1) Setoran loket (langsung selesai, poin masuk) untuk warga utama:
-         *    Botol PET 3,5 kg x 10 = 35 poin; Kardus / Duplex 2 kg x 4 = 8 poin. Total 43.
-         */
         $deposits->createDeposit($warga, [
             ['waste_category_id' => $categories['Botol PET']->getKey(), 'weight_in_kg' => 3.5],
             ['waste_category_id' => $categories['Kardus / Duplex']->getKey(), 'weight_in_kg' => 2.0],
         ], $petugas, DepositStatus::Completed);
 
-        /*
-         * 2) Setoran pending warga utama (menunggu verifikasi):
-         *    Kaleng 1,2 kg x 25 = 30; Plastik Kresek 0,5 kg x 3 = 1.5 -> 2. Total 32.
-         */
         $deposits->createDeposit($warga, [
             ['waste_category_id' => $categories['Kaleng Aluminium']->getKey(), 'weight_in_kg' => 1.2],
             ['waste_category_id' => $categories['Plastik Kresek']->getKey(), 'weight_in_kg' => 0.5],
         ], null, DepositStatus::Pending);
 
-        /*
-         * 3) Setoran pending + loket untuk akun Sari (bila ada), agar antrian
-         *    dan riwayatnya tidak kosong saat demo.
-         */
         if ($sari !== null) {
             $deposits->createDeposit($sari, [
                 ['waste_category_id' => $categories['Kertas HVS']->getKey(), 'weight_in_kg' => 2.0],
@@ -91,11 +63,6 @@ class DemoTransactionSeeder extends Seeder
             ], $petugas, DepositStatus::Completed);
         }
 
-        /*
-         * 4) Penarikan dengan tiga akhir cerita: diproses, ditolak (refund),
-         *    dan masih diajukan (mengisi antrian petugas).
-         *    Saldo warga mencukupi: 1500 (seeder) + 43 (setoran loket).
-         */
         $processed = $withdrawals->requestWithdrawal(
             $warga,
             300,

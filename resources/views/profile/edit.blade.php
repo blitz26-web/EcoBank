@@ -12,7 +12,6 @@
                 </span>
             </div>
 
-            {{-- ==================== Data Profil ==================== --}}
             <div class="card app-card mb-4">
                 <div class="card-header bg-body border-0 pt-3 pb-0">
                     <h2 class="h6 fw-bold mb-0"><i class="bi bi-person me-1 text-success"></i>Data Diri</h2>
@@ -60,7 +59,67 @@
                 </div>
             </div>
 
-            {{-- ==================== Ganti Kata Sandi ==================== --}}
+            <div class="card app-card mb-4" id="target-tabungan">
+                <div class="card-header bg-body border-0 pt-3 pb-0">
+                    <h2 class="h6 fw-bold mb-0"><i class="bi bi-flag-fill me-1 text-success"></i>Target Tabungan Poin</h2>
+                </div>
+                <div class="card-body p-4">
+                    @if ($user->hasSavingsGoal())
+                        <div class="alert alert-success d-flex align-items-center gap-2 py-2">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <div>
+                                Target aktif: <strong>{{ $user->savings_goal_title }}</strong>
+                                &mdash; {{ number_format($user->balance_points, 0, ',', '.') }} / {{ number_format($user->savings_goal_points, 0, ',', '.') }} poin ({{ $user->savingsGoalPercent() }}%).
+                            </div>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('profile.goal.update') }}" novalidate>
+                        @csrf
+                        @method('PATCH')
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="savings_goal_title" class="form-label fw-semibold">Nama Target</label>
+                                <input type="text" class="form-control @error('savings_goal_title') is-invalid @enderror"
+                                       id="savings_goal_title" name="savings_goal_title" maxlength="100"
+                                       placeholder="Contoh: Beli sepeda listrik"
+                                       value="{{ old('savings_goal_title', $user->savings_goal_title) }}">
+                                @error('savings_goal_title')
+                                    <div class="form-text text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Kosongkan nama target untuk menghapus target.</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="savings_goal_points" class="form-label fw-semibold">Target Poin</label>
+                                <input type="number" min="1" max="1000000" step="1"
+                                       class="form-control @error('savings_goal_points') is-invalid @enderror"
+                                       id="savings_goal_points" name="savings_goal_points"
+                                       placeholder="Contoh: 5000"
+                                       value="{{ old('savings_goal_points', $user->savings_goal_points) }}">
+                                @error('savings_goal_points')
+                                    <div class="form-text text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">
+                                    @if ($user->hasSavingsGoal())
+                                        Setara Rp {{ number_format($user->savings_goal_points * (int) config('kas-hijau.point_value'), 0, ',', '.') }}.
+                                    @else
+                                        Progres target tampil di dashboard Anda.
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid d-sm-flex justify-content-sm-end mt-4">
+                            <button type="submit" class="btn btn-outline-success px-4">
+                                <i class="bi bi-flag me-1"></i>Simpan Target
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="card app-card">
                 <div class="card-header bg-body border-0 pt-3 pb-0">
                     <h2 class="h6 fw-bold mb-0"><i class="bi bi-key me-1 text-success"></i>Ganti Kata Sandi</h2>

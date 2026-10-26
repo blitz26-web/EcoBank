@@ -10,9 +10,6 @@ enum WithdrawalStatus: string
     case Processed = 'processed';
     case Rejected = 'rejected';
 
-    /**
-     * Label yang ramah pengguna untuk ditampilkan di UI.
-     */
     public function label(): string
     {
         return match ($this) {
@@ -22,9 +19,6 @@ enum WithdrawalStatus: string
         };
     }
 
-    /**
-     * Kelas warna badge Bootstrap 5 sesuai status.
-     */
     public function badgeClass(): string
     {
         return match ($this) {
@@ -34,9 +28,6 @@ enum WithdrawalStatus: string
         };
     }
 
-    /**
-     * Ikon Bootstrap Icons sesuai status.
-     */
     public function icon(): string
     {
         return match ($this) {
